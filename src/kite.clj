@@ -1,5 +1,16 @@
 (ns kite)
 
-(defn f [a] (str "f" a))
+(load "protocols")
+(load "hierarchy")
+(load "functor")
+(load "applicative")
+(load "monad")
+(load "monoid")
+(load "identity")
+(load "maybe")
+(load "either")
+(load "sequential")
+(load "reader")
+(load "try")
 
 ;; eof

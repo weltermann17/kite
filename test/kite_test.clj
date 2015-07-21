@@ -3,6 +3,8 @@
 (require '[expectations :refer :all]
          '[kite :refer :all])
 
-(expect "f1" (f 1))
+(expect 1 1)
+
+(expect 2 2)
 
 ;; eof
