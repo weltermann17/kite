@@ -45,10 +45,7 @@
                                                (failure e))))
 
     IMatchLookup
-    (val-at [_ k not-found]
-      (case k
-        ::success v
-        not-found))))
+    (val-at [_ k d] (case k ::success v d))))
 
 (defn failure [v]
   (reify
@@ -71,10 +68,7 @@
     (-bind [m _] m)
 
     IMatchLookup
-    (val-at [_ k not-found]
-      (case k
-        ::failure v
-        not-found))))
+    (val-at [_ k d] (case k ::failure v d))))
 
 (defmacro ->try [& body]
   `(try
@@ -82,10 +76,10 @@
      (catch Throwable e# (when (fatal? e#) (throw e#))
                          (failure e#))))
 
-(defn match-try [f g t]
+(defn match-try [fail succ t]
   (match [t]
-         [{::failure v}] (f v)
-         [{::success v}] (g v)))
+         [{::failure v}] (fail t)
+         [{::success v}] (succ t)))
 
 (defn try-fn [f] (->try (f)))
 

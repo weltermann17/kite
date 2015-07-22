@@ -40,10 +40,7 @@
     (-bind [_ f] (f v))
 
     IMatchLookup
-    (val-at [_ k not-found]
-      (case k
-        ::just v
-        not-found))))
+    (val-at [_ k d] (case k ::just v d))))
 
 (def nothing
   (reify
@@ -67,10 +64,7 @@
     (-bind [_ _] nothing)
 
     IMatchLookup
-    (val-at [_ k not-found]
-      (case k
-        ::nothing nil
-        not-found))))
+    (val-at [_ k d] (case k ::nothing nil d))))
 
 (defn maybe [d f m]
   (match [m]

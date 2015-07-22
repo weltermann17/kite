@@ -4,7 +4,6 @@
 
 (defn reader [v]
   (reify
-
     Reader
 
     Object

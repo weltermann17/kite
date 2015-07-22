@@ -19,44 +19,55 @@
   (on-success [_ f])
   (on-complete [_ f]))
 
-(defn- failed-future [v] nil)
+(declare failed immediate)
 
-(defn- execute [f v] nil)
-(defn- execute-all [f v] nil)
+(defn- execute ([_] nil) ([_ _] nil))
+(defn- execute-all [_ _] nil)
 
-(defn- mk-future [v callbacks]
+(defn- ^Future mk-future [value callbacks]
   (reify
     Future
-    (await [this milliseconds]
+    (await [m milliseconds]
       (let [phaser (Phaser. 1)]
-        (on-complete this (fn [_] (.arriveAndDeregister phaser)))
+        (on-complete m (fn [_] (.arriveAndDeregister phaser)))
         (try
-          (.awaitAdvanceInterruptibly phaser 0 milliseconds TimeUnit/MILLISECONDS)
-          this
+          (.awaitAdvanceInterruptibly phaser 0 milliseconds TimeUnit/MILLISECONDS) m
           (catch TimeoutException _
-            (failed-future (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
+            (failed (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
           (catch Exception e
-            (failed-future e)))))
+            (failed e)))))
     (on-complete [_ f]
       (let [v @value]
         (if (= v ::incomplete)
           (vswap! callbacks conj f)
           (execute f v))))
-    (on-failure [this f] (on-complete this (fn [v] (match-try (comp f deref) nil v))))
-    (on-success [this f] (on-complete this (fn [v] (match-try nil (comp f deref) v))))
+    (on-failure [m f] (on-complete m (fn [v] (match-try (comp f deref) nil v))))
+    (on-success [m f] (on-complete m (fn [v] (match-try nil (comp f deref) v))))
 
     IDeref
-    (deref [_] @v)
+    (deref [_] @value)
 
     Object
-    (equals [_ o] (and (satisfies? Future o) (= v (deref o))))
-    (hashCode [_] (hash v))
-    (toString [_] (str "Future " v))))
+    (equals [_ o] (and (satisfies? Future o) (= value (deref o))))
+    (hashCode [_] (hash value))
+    (toString [_] (str "Future " value))
 
-(defn promise []
-  (let [v (volatile! ::incomplete)
+    Functor
+    (-fmap [_ f] f)
+
+    Pure
+    (-pure [_ u] (immediate u))
+
+    Applicative
+    (-ap [_ m] m)
+
+    Monad
+    (-bind [_ f] f)))
+
+(defn ^Promise promise []
+  (let [value (volatile! ::incomplete)
         callbacks (volatile! [])
-        fut (mk-future v callbacks)]
+        future (mk-future value callbacks)]
     (reify
       Promise
       (complete [_ v]
@@ -64,16 +75,39 @@
           (do (vreset! value v) (execute-all @callbacks v))
           (let [^String s (<< "A promise cannot be completed more than once, value = ~{value}, not accepted value = ~{v}")]
             (throw (IllegalStateException. s)))))
-      (->future [_] fut)
+      (->future [_] future)
 
       IDeref
       (deref [_] @value)
 
       Object
-      (equals [_ o] (and (satisfies? Promise o) (= v (deref o))))
-      (hashCode [_] (hash v))
-      (toString [_] (str "Promise " v)))))
+      (equals [_ o] (and (satisfies? Promise o) (= value (deref o))))
+      (hashCode [_] (hash value))
+      (toString [_] (str "Promise " value)))))
 
-(comment promise)
+(defn ^Future future-fn [f]
+  (let [p (promise)]
+    (execute (fn [] (complete p (try-fn f))))
+    (->future p)))
+
+(defn ^Future immediate [v]
+  (let [p (promise)]
+    (complete p (success v))
+    (->future p)))
+
+(defn ^Future failed [v]
+  (let [p (promise)]
+    (complete p (failure v))
+    (->future p)))
+
+(defmacro ^Future future [& body]
+  `(future-fn (fn [] ~@body)))
+
+(defmacro ^:private ^Future try-future
+  [& body]
+  `(try
+     ~@body
+     (catch Exception t#
+       (failed t#))))
 
 ;; eof

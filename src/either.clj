@@ -33,10 +33,7 @@
     (-bind [_ f] (f v))
 
     IMatchLookup
-    (val-at [_ k not-found]
-      (case k
-        ::right v
-        not-found))))
+    (val-at [_ k d] (case k ::right v d))))
 
 (defn left [v]
   (reify
@@ -59,15 +56,12 @@
     (-bind [m _] m)
 
     IMatchLookup
-    (val-at [_ k not-found]
-      (case k
-        ::left v
-        not-found))))
+    (val-at [_ k d] (case k ::left v d))))
 
-(defn either [f g e]
+(defn either [l r e]
   (match [e]
-         [{::left v}] (f v)
-         [{::right v}] (g v)))
+         [{::left v}] (l v)
+         [{::right v}] (r v)))
 
 (defn mirror [e]
   (match [e]

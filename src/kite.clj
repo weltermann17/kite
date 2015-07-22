@@ -1,12 +1,12 @@
 (ns kite
   (:refer-clojure :exclude [await future promise]))
 
-(load "protocols")
-(load "hierarchy")
-(load "functor")
-(load "applicative")
-(load "monad")
-(load "monoid")
+(load "impl/protocols")
+(load "impl/hierarchy")
+(load "impl/functor")
+(load "impl/applicative")
+(load "impl/monad")
+(load "impl/monoid")
 (load "identity")
 (load "maybe")
 (load "either")

@@ -5,7 +5,7 @@
 
 (extend-type Sequential
   Functor
-  (-fmap [v f] #_(into []) (map f v))
+  (-fmap [v f] (into [] (map f v)))
 
   Pure
   (-pure [_ v] [v])
