@@ -1,4 +1,5 @@
-(ns kite-test)
+(ns kite-test
+  (:refer-clojure :exclude [await future promise]))
 
 (require '[expectations :refer :all]
          '[kite :refer :all])

@@ -7,6 +7,7 @@
                   ["jar"]]
   :dependencies [[org.clojure/clojure "1.8.0-alpha2"]
                  [org.clojure/core.match "0.3.0-alpha4"]
+                 [org.clojure/core.incubator "0.1.3"]
                  [expectations "2.1.2"]]
   :source-paths ["src"]
   :target-path "target/")

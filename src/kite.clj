@@ -1,4 +1,5 @@
-(ns kite)
+(ns kite
+  (:refer-clojure :exclude [await future promise]))
 
 (load "protocols")
 (load "hierarchy")
@@ -12,5 +13,6 @@
 (load "sequential")
 (load "reader")
 (load "try")
+(load "future")
 
 ;; eof
