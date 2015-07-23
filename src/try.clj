@@ -36,7 +36,7 @@
     (toString [_] (str "Success " v))
 
     Functor
-    (-fmap [_ f] (->try (f v)))
+    (-fmap [_ f] (success (f v)))
 
     Pure
     (-pure [_ u] (success u))
@@ -50,9 +50,12 @@
 
 (defn failure [v]
   (reify
-    Either
+    Try
     Failure
     (-failure [_] v)
+
+    IDeref
+    (deref [_] v)
 
     Object
     (equals [_ o] (and (satisfies? Failure o) (= v (-failure o))))
@@ -71,19 +74,17 @@
     IMatchLookup
     (val-at [_ k d] (case k ::failure v d))))
 
+(defn match-try [fail succ t]
+  (matchm [t]
+          [{::failure v}] (fail t)
+          [{::success v}] (succ t)))
+
 (defmacro ->try [& body]
   `(try
      (success (do ~@body))
      (catch Throwable e# (when (fatal? e#) (throw e#))
                          (failure e#))))
 
-(defn match-try [fail succ t]
-  (matchm [t]
-          [{::failure v}] (fail t)
-          [{::success v}] (succ t)))
-
 (defn try-fn [f] (->try (f)))
-
-(comment match-try try-fn)
 
 ;; eof

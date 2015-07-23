@@ -56,6 +56,4 @@
   ([f] f)
   ([f & fs] (fn [& args] (apply >>= (apply f args) fs))))
 
-(comment lift join >=>)
-
 ;; eof

@@ -9,22 +9,26 @@
 
 ;; protocols
 
+(defprotocol Future
+  (^Try await [_ milliseconds] "Should be used for testing only.")
+  (on-complete [_ f]))
+
 (defprotocol Promise
   (complete [_ v])
-  (->future [_]))
-
-(defprotocol Future
-  (await [_ milliseconds] "Should be used for testing only.")
-  (on-complete [_ f]))
+  (^Future ->future [_]))
 
 ;; mocks
 
-(defn- execute ([_] nil) ([_ _] nil))
-(defn- execute-all [_ _] nil)
+(defn- execute
+  ([f v] (execute (fn [] (f v))))
+  ([f] (f)))
+
+(defn- execute-all [fs v]
+  (doseq [f fs] (execute f v)))
 
 ;; types
 
-(declare failed immediate mk-future try-future)
+(declare immediate mk-future try-future)
 
 (defn- !illegal-state [^String s]
   (throw (IllegalStateException. s)))
@@ -49,6 +53,14 @@
       (hashCode [_] (hash value))
       (toString [_] (str "Promise " value)))))
 
+(defn lift2
+  "Lifts a binary function `f` into a monadic context"
+  [f]
+  (fn [ma mb]
+    (m-do [a ma
+           b mb]
+          [(pure ma (f a b))])))
+
 (defn- ^Future mk-future [value callbacks]
   (reify
     Future
@@ -56,11 +68,12 @@
       (let [phaser (Phaser. 1)]
         (on-complete m (fn [_] (.arriveAndDeregister phaser)))
         (try
-          (.awaitAdvanceInterruptibly phaser 0 milliseconds TimeUnit/MILLISECONDS) m
+          (.awaitAdvanceInterruptibly phaser 0 milliseconds TimeUnit/MILLISECONDS)
+          (deref m)
           (catch TimeoutException _
-            (failed (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
+            (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
           (catch Exception e
-            (failed e)))))
+            (failure e)))))
     (on-complete [_ f]
       (let [v @value]
         (if (= v ::incomplete)
@@ -76,16 +89,19 @@
     (toString [_] (str "Future " value))
 
     Functor
-    (-fmap [_ f] f)
+    (-fmap [m f]
+      (let [p (promise)]
+        (on-complete m (fn [a] (complete p (match-try identity f a))))
+        (->future p)))
 
     Pure
-    (-pure [_ u] (immediate u))
+    (-pure [_ u] (println "-pure" u) (immediate u))
 
     Applicative
-    (-ap [_ m] m)
+    (-ap [m f] (println "-ap") (println m) (println f) ((lift2 #(% %2)) m f)) ;; :TODO: fix stackoverflow
 
     Monad
-    (-bind [_ f] (try-future f))))
+    (-bind [_ f] (/ 1 0) :nyi)))
 
 ;; fn
 
