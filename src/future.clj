@@ -4,25 +4,50 @@
   [clojure.lang IDeref]
   [java.util.concurrent Phaser TimeoutException TimeUnit])
 
-(refer-clojure :exclude '[await future promise])
-
 (require
   '[clojure.core.strint :refer [<<]])
+
+;; protocols
 
 (defprotocol Promise
   (complete [_ v])
   (->future [_]))
 
 (defprotocol Future
-  (await [_ milliseconds])
-  (on-failure [_ f])
-  (on-success [_ f])
+  (await [_ milliseconds] "Should be used for testing only.")
   (on-complete [_ f]))
 
-(declare failed immediate)
+;; mocks
 
 (defn- execute ([_] nil) ([_ _] nil))
 (defn- execute-all [_ _] nil)
+
+;; types
+
+(declare failed immediate mk-future try-future)
+
+(defn- !illegal-state [^String s]
+  (throw (IllegalStateException. s)))
+
+(defn ^Promise promise []
+  (let [value (volatile! ::incomplete)
+        callbacks (volatile! [])
+        future (mk-future value callbacks)]
+    (reify
+      Promise
+      (complete [_ v]
+        (if (= @value ::incomplete)
+          (do (vreset! value v) (execute-all @callbacks v))
+          (!illegal-state (<< "A promise cannot be completed more than once, value = ~{value}, value not accepted = ~{v}"))))
+      (->future [_] future)
+
+      IDeref
+      (deref [_] @value)
+
+      Object
+      (equals [_ o] (and (satisfies? Promise o) (= value (deref o))))
+      (hashCode [_] (hash value))
+      (toString [_] (str "Promise " value)))))
 
 (defn- ^Future mk-future [value callbacks]
   (reify
@@ -41,8 +66,6 @@
         (if (= v ::incomplete)
           (vswap! callbacks conj f)
           (execute f v))))
-    (on-failure [m f] (on-complete m (fn [v] (match-try (comp f deref) nil v))))
-    (on-success [m f] (on-complete m (fn [v] (match-try nil (comp f deref) v))))
 
     IDeref
     (deref [_] @value)
@@ -62,28 +85,9 @@
     (-ap [_ m] m)
 
     Monad
-    (-bind [_ f] f)))
+    (-bind [_ f] (try-future f))))
 
-(defn ^Promise promise []
-  (let [value (volatile! ::incomplete)
-        callbacks (volatile! [])
-        future (mk-future value callbacks)]
-    (reify
-      Promise
-      (complete [_ v]
-        (if (= @value ::incomplete)
-          (do (vreset! value v) (execute-all @callbacks v))
-          (let [^String s (<< "A promise cannot be completed more than once, value = ~{value}, not accepted value = ~{v}")]
-            (throw (IllegalStateException. s)))))
-      (->future [_] future)
-
-      IDeref
-      (deref [_] @value)
-
-      Object
-      (equals [_ o] (and (satisfies? Promise o) (= value (deref o))))
-      (hashCode [_] (hash value))
-      (toString [_] (str "Promise " value)))))
+;; fn
 
 (defn ^Future future-fn [f]
   (let [p (promise)]
@@ -99,6 +103,8 @@
   (let [p (promise)]
     (complete p (failure v))
     (->future p)))
+
+;; macros
 
 (defmacro ^Future future [& body]
   `(future-fn (fn [] ~@body)))

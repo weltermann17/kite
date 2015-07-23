@@ -6,10 +6,10 @@
 (defn pure [m a]
   (if (satisfies? Pure m) (-pure m a) (pure+ m a)))
 
-(declare <*)
-
 (defmulti <*>+
           (fn [af & _] (most-general ::applicative af)))
+
+(declare <*)
 
 (defn <*>
   ([af] (fmap #(%) af))

@@ -4,6 +4,7 @@
   [clojure.lang IDeref])
 
 (require
+  '[clojure.core.match :refer [matchm]]
   '[clojure.core.match.protocols :refer [IMatchLookup]])
 
 (defprotocol Either)
@@ -59,14 +60,15 @@
     (val-at [_ k d] (case k ::left v d))))
 
 (defn either [l r e]
-  (match [e]
-         [{::left v}] (l v)
-         [{::right v}] (r v)))
+  (matchm [e]
+          [{::left v}] (l v)
+          [{::right v}] (r v)))
 
 (defn mirror [e]
-  (match [e]
-         [{::left v}] (right v)
-         [{::right v}] (left v)))
+  "Needed for arrows."
+  (matchm [e]
+          [{::left v}] (right v)
+          [{::right v}] (left v)))
 
 (comment either mirror)
 

@@ -4,6 +4,7 @@
   [clojure.lang IDeref])
 
 (require
+  '[clojure.core.match :refer [matchm]]
   '[clojure.core.match.protocols :refer [IMatchLookup]])
 
 (defprotocol Try)
@@ -77,9 +78,9 @@
                          (failure e#))))
 
 (defn match-try [fail succ t]
-  (match [t]
-         [{::failure v}] (fail t)
-         [{::success v}] (succ t)))
+  (matchm [t]
+          [{::failure v}] (fail t)
+          [{::success v}] (succ t)))
 
 (defn try-fn [f] (->try (f)))
 

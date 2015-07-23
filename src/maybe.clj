@@ -1,9 +1,10 @@
 (in-ns 'kite)
 
 (import
-  [clojure.lang IDeref])
+  [clojure.lang IFn IDeref])
 
 (require
+  '[clojure.core.match :refer [matchm]]
   '[clojure.core.match.protocols :refer [IMatchLookup]])
 
 (declare maybe nothing)
@@ -51,6 +52,10 @@
     (toString [_] "Nothing")
     (equals [this o] (identical? this o))
 
+    IFn
+    (invoke [_]
+      "To allow nothing to be called as a 0 arity function." nothing)
+
     Functor
     (-fmap [_ _] nothing)
 
@@ -66,9 +71,12 @@
     IMatchLookup
     (val-at [_ k d] (case k ::nothing nil d))))
 
-(defn maybe [d f m]
-  (match [m]
-         [{::just v}] (f v)
-         [{::nothing _}] d))
+(defn maybe
+  ([v]
+   (if v (just v) nothing))
+  ([d f m]
+   (matchm [m]
+           [{::just v}] (f v)
+           [{::nothing _}] d)))
 
 ;; eof
