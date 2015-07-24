@@ -2,9 +2,10 @@
   (:refer-clojure :exclude [await future promise]))
 
 (require '[expectations :refer :all]
+         '[kite.category :refer :all]
          '[kite :refer :all])
 
-;; maybe
+;;maybe ?
 (expect (just 1) (just (- 2 1)))
 (expect nothing (nothing))
 (expect (just 1) (maybe 1))
@@ -48,10 +49,11 @@
 
 ;; try
 (expect (type @(->try (/ 2 0))) (type @(->try (/ 1 0))))
-(expect ArithmeticException (throw (deref (match-try identity inc (->try (/ 1 0))))))
+(expect ArithmeticException (throw (deref (match-try (->try (/ 1 0)) inc identity))))
 (expect ArithmeticException (throw (deref (fmap inc (->try (/ 1 0))))))
 (expect (success 2) (->try (+ 1 1)))
 (expect (success 2) (fmap inc (->try (+ 1 0))))
+(expect (success 8) (<*> (success +) (success 8)))
 (expect (success 21) (<*> (success +) (success 8) (success 7) (success 6)))
 (expect (success 21) (<*> (success +) (just 8) (just 7) (just 6)))
 (expect (nothing) (<*> (success +) (just 8) (nothing) (just 6)))
@@ -73,9 +75,19 @@
 (expect (success 2) (await (future (+ 1 1)) 100))
 (expect (partial satisfies? Failure) (await (future (/ 1 0)) 100))
 (expect (success 3) (await (fmap (lift inc) (future (+ 1 1))) 100))
-(expect :nyi (<*> (future +) (future 8)))
+(expect (success 6)
+        (await (m-do [x (immediate 1)
+                      y (future (+ 2 0))
+                      z (immediate 3)]
+                     [:return (+ x y z)]) 100))
+(expect (partial satisfies? Failure)
+        (await (m-do [x (immediate 1)
+                      y (future (/ 2 0))
+                      z (immediate 3)]
+                     [:return (+ x y z)]) 100))
+
+;(expect (success 9) (await (<*> (future inc) (future (+ 8 0))) 100))
 ;(expect (success 8) (await (<*> (future +) (future 8)) 100))
 ;(expect (success 21) (await (<*> (lift +) (future 8) (future 7) (future 6)) 100))
-;(expect (success [1 5 3]) (await (m-do [x (future 1)] (future 2) [:let y 5, z 3] (future [x y z])) 100))
 
 ;; eof

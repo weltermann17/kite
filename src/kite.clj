@@ -1,18 +1,24 @@
 (ns kite
   (:refer-clojure :exclude [await future promise]))
 
-(load "impl/protocols")
-(load "impl/hierarchy")
-(load "impl/functor")
-(load "impl/applicative")
-(load "impl/monad")
-(load "impl/monoid")
-(load "identity")
-(load "maybe")
-(load "either")
-(load "sequential")
-(load "reader")
-(load "try")
-(load "future")
+(import
+  [clojure.lang IDeref])
+
+(require
+  '[clojure.core.strint :refer [<<]]
+  '[clojure.core.match :refer [matchm]]
+  '[clojure.core.match.protocols :refer [IMatchLookup]]
+  '[kite.control :refer :all]
+  '[kite.category :refer :all])
+
+(load "kite/identity")
+(load "kite/maybe")
+(load "kite/either")
+(load "kite/sequential")
+(load "kite/reader")
+(load "kite/try")
+(load "kite/future")
+
+(comment IDeref)
 
 ;; eof

@@ -1,37 +1,25 @@
 (in-ns 'kite)
 
 (import
-  [clojure.lang IDeref]
   [java.util.concurrent Phaser TimeoutException TimeUnit])
 
 (require
-  '[clojure.core.strint :refer [<<]])
+  '[kite.control :refer :all])
 
 ;; protocols
 
 (defprotocol Future
-  (^Try await [_ milliseconds] "Should be used for testing only.")
+  (^Try await [_ milliseconds]
+    "Should be used for testing only.")
   (on-complete [_ f]))
 
 (defprotocol Promise
   (complete [_ v])
   (^Future ->future [_]))
 
-;; mocks
-
-(defn- execute
-  ([f v] (execute (fn [] (f v))))
-  ([f] (f)))
-
-(defn- execute-all [fs v]
-  (doseq [f fs] (execute f v)))
-
 ;; types
 
-(declare immediate mk-future try-future)
-
-(defn- !illegal-state [^String s]
-  (throw (IllegalStateException. s)))
+(declare mk-future)
 
 (defn ^Promise promise []
   (let [value (volatile! ::incomplete)
@@ -42,7 +30,7 @@
       (complete [_ v]
         (if (= @value ::incomplete)
           (do (vreset! value v) (execute-all @callbacks v))
-          (!illegal-state (<< "A promise cannot be completed more than once, value = ~{value}, value not accepted = ~{v}"))))
+          (illegal-state! (<< "A promise cannot be completed more than once, value = ~{value}, value not accepted = ~{v}"))))
       (->future [_] future)
 
       IDeref
@@ -53,13 +41,15 @@
       (hashCode [_] (hash value))
       (toString [_] (str "Promise " value)))))
 
-(defn lift2
-  "Lifts a binary function `f` into a monadic context"
-  [f]
-  (fn [ma mb]
-    (m-do [a ma
-           b mb]
-          [(pure ma (f a b))])))
+(comment (defn lift2
+           "Lifts a binary function `f` into a monadic context"
+           [f]
+           (fn [ma mb]
+             (m-do [a ma
+                    b mb]
+                   [(pure ma (f a b))]))))
+
+(declare failed-only immediate)
 
 (defn- ^Future mk-future [value callbacks]
   (reify
@@ -67,13 +57,11 @@
     (await [m milliseconds]
       (let [phaser (Phaser. 1)]
         (on-complete m (fn [_] (.arriveAndDeregister phaser)))
-        (try
-          (.awaitAdvanceInterruptibly phaser 0 milliseconds TimeUnit/MILLISECONDS)
-          (deref m)
-          (catch TimeoutException _
-            (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
-          (catch Exception e
-            (failure e)))))
+        (try (.awaitAdvanceInterruptibly phaser 0 milliseconds TimeUnit/MILLISECONDS)
+             (deref m)
+             (catch TimeoutException _
+               (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
+             (catch Throwable e (fatal?! e) (failure e)))))
     (on-complete [_ f]
       (let [v @value]
         (if (= v ::incomplete)
@@ -86,22 +74,30 @@
     Object
     (equals [_ o] (and (satisfies? Future o) (= value (deref o))))
     (hashCode [_] (hash value))
-    (toString [_] (str "Future " value))
+    (toString [_] (str "Future " (deref value)))
 
     Functor
     (-fmap [m f]
       (let [p (promise)]
-        (on-complete m (fn [a] (complete p (match-try identity f a))))
+        (on-complete m (fn [a] (complete p (match-try a f identity))))
         (->future p)))
 
     Pure
-    (-pure [_ u] (println "-pure" u) (immediate u))
+    (-pure [_ u] (immediate u))
 
     Applicative
-    (-ap [m f] (println "-ap") (println m) (println f) ((lift2 #(% %2)) m f)) ;; :TODO: fix stackoverflow
+    (-ap [m f] ((lift #(% %2)) m f))
 
     Monad
-    (-bind [_ f] (/ 1 0) :nyi)))
+    (-bind [m f]
+      (let [p (promise)]
+        (on-complete
+          m (fn [a]
+              (if (satisfies? Success a)
+                (on-complete
+                  (failed-only (f (deref a))) (fn [b] (complete p b)))
+                (complete p a))))
+        (->future p)))))
 
 ;; fn
 
@@ -120,16 +116,12 @@
     (complete p (failure v))
     (->future p)))
 
+(defn- failed-only [f]
+  (try f (catch Throwable e (fatal?! e) (failed e))))
+
 ;; macros
 
 (defmacro ^Future future [& body]
   `(future-fn (fn [] ~@body)))
-
-(defmacro ^:private ^Future try-future
-  [& body]
-  `(try
-     ~@body
-     (catch Exception t#
-       (failed t#))))
 
 ;; eof

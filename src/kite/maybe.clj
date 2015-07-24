@@ -1,16 +1,14 @@
 (in-ns 'kite)
 
 (import
-  [clojure.lang IFn IDeref])
-
-(require
-  '[clojure.core.match :refer [matchm]]
-  '[clojure.core.match.protocols :refer [IMatchLookup]])
+  [clojure.lang IFn])
 
 (declare maybe nothing)
 
 (defprotocol Maybe)
+
 (defprotocol Nothing)
+
 (defprotocol Just
   (value [_]))
 

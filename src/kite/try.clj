@@ -1,25 +1,14 @@
 (in-ns 'kite)
 
-(import
-  [clojure.lang IDeref])
-
-(require
-  '[clojure.core.match :refer [matchm]]
-  '[clojure.core.match.protocols :refer [IMatchLookup]])
-
 (defprotocol Try)
+
 (defprotocol Success
   (-success [_]))
+
 (defprotocol Failure
   (-failure [_]))
 
 (declare ->try failure)
-
-(defn fatal? [^Throwable e]
-  (some #(instance? % e) [InterruptedException
-                          LinkageError
-                          ThreadDeath
-                          VirtualMachineError]))
 
 (defn success [v]
   (reify
@@ -42,8 +31,7 @@
     (-pure [_ u] (success u))
 
     Monad
-    (-bind [_ f] (try (f v) (catch Throwable e (when (fatal? e) (throw e))
-                                               (failure e))))
+    (-bind [_ f] (try (f v) (catch Throwable e (fatal?! e) (failure e))))
 
     IMatchLookup
     (val-at [_ k d] (case k ::success v d))))
@@ -74,16 +62,15 @@
     IMatchLookup
     (val-at [_ k d] (case k ::failure v d))))
 
-(defn match-try [fail succ t]
+(defn match-try [t succ fail]
   (matchm [t]
-          [{::failure v}] (fail t)
-          [{::success v}] (succ t)))
+          [{::failure _}] (fail t)
+          [{::success _}] (succ t)))
 
 (defmacro ->try [& body]
   `(try
      (success (do ~@body))
-     (catch Throwable e# (when (fatal? e#) (throw e#))
-                         (failure e#))))
+     (catch Throwable e# (fatal?! e#) (failure e#))))
 
 (defn try-fn [f] (->try (f)))
 

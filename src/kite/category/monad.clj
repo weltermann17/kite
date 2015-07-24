@@ -1,4 +1,4 @@
-(in-ns 'kite)
+(in-ns 'kite.category)
 
 (require
   '[clojure.core.match :refer [match]])
@@ -18,26 +18,26 @@
 
 (defn m-do*
   ([body] (m-do* body false))
-  ([body type]
+  ([body t]
    (match [body]
           [([val] :seq)]
           (match val
-                 [:return v] `(pure ~type ~v)
+                 [:return v] `(pure ~t ~v)
                  v v)
           [([fst & rst] :seq)]
           (match fst
-                 [:let & vs] `(let [~@vs] ~(m-do* rst type))
-                 [:return v] `(>>= (pure ~type ~v) (fn [_#] ~(m-do* rst type)))
-                 [:guard v] `(>>= (if ~v (pure ~type nil) (zero ~type))
-                                  (fn [_#] ~(m-do* rst type)))
-                 [k v] (if type
-                         `(>>= ~v (fn [~k] ~(m-do* rst type)))
+                 [:let & vs] `(let [~@vs] ~(m-do* rst t))
+                 [:return v] `(>>= (pure ~t ~v) (fn [_#] ~(m-do* rst t)))
+                 [:guard v] `(>>= (if ~v (pure ~t nil) (zero ~t))
+                                  (fn [_#] ~(m-do* rst t)))
+                 [k v] (if t
+                         `(>>= ~v (fn [~k] ~(m-do* rst t)))
                          (let [t `t#]
                            `(let [~t ~v]
                               (>>= ~t (fn [~k] ~(m-do* rst t))))))
-                 [k v & rs] (m-do* (concat [[k v]] [rs] rst) type)
-                 v (if type
-                     `(>>= ~v (fn [_#] ~(m-do* rst type)))
+                 [k v & rs] (m-do* (concat [[k v]] [rs] rst) t)
+                 v (if t
+                     `(>>= ~v (fn [_#] ~(m-do* rst t)))
                      (let [t `t#]
                        `(let [~t ~v]
                           (>>= ~t (fn [_#] ~(m-do* rst t))))))))))

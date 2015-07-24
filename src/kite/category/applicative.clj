@@ -1,4 +1,4 @@
-(in-ns 'kite)
+(in-ns 'kite.category)
 
 (defmulti pure+
           (fn [a _] (most-general ::applicative a)))

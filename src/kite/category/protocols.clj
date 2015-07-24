@@ -1,4 +1,4 @@
-(in-ns 'kite)
+(in-ns 'kite.category)
 
 (defprotocol Functor
   (-fmap [v f]))

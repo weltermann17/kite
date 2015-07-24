@@ -1,15 +1,10 @@
 (in-ns 'kite)
 
-(import
-  [clojure.lang IDeref])
-
-(require
-  '[clojure.core.match :refer [matchm]]
-  '[clojure.core.match.protocols :refer [IMatchLookup]])
-
 (defprotocol Either)
+
 (defprotocol Left
   (-left [_]))
+
 (defprotocol Right
   (-right [_]))
 

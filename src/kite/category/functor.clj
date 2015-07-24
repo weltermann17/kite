@@ -1,4 +1,4 @@
-(in-ns 'kite)
+(in-ns 'kite.category)
 
 (defmulti fmap+
           (fn [_ v] (most-general ::functor v)))
