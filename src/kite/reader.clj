@@ -6,8 +6,11 @@
   (reify
     Reader
 
+    IDeref
+    (deref [_] v)
+
     Object
-    (equals [_ o] (and (satisfies? Reader o) (= v (value o))))
+    (equals [this o] (equal? this o Reader #(= v @o)))
     (hashCode [_] (hash v))
     (toString [_] (str "Reader " v))
 
@@ -18,7 +21,7 @@
     (-pure [_ u] (fn [_] u))
 
     Applicative
-    (-ap [_ _] ::nyi)
+    (-ap [_ _] no-such-method!)
 
     Monad
     (-bind [m f] (fn [r] ((f (m r)) r)))))

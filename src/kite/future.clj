@@ -9,7 +9,7 @@
 ;; protocols
 
 (defprotocol Future
-  (^Try await [_ milliseconds]
+  (^Result await [_ milliseconds]
     "Should be used for testing only.")
   (on-complete [_ f]))
 
@@ -37,17 +37,9 @@
       (deref [_] @value)
 
       Object
-      (equals [_ o] (and (satisfies? Promise o) (= value (deref o))))
+      (equals [this o] (or (identical? this o) (and (satisfies? Promise o) (= value (deref o)))))
       (hashCode [_] (hash value))
       (toString [_] (str "Promise " value)))))
-
-(comment (defn lift2
-           "Lifts a binary function `f` into a monadic context"
-           [f]
-           (fn [ma mb]
-             (m-do [a ma
-                    b mb]
-                   [(pure ma (f a b))]))))
 
 (declare failed-only immediate)
 
@@ -61,7 +53,7 @@
              (deref m)
              (catch TimeoutException _
                (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
-             (catch Throwable e (fatal?! e) (failure e)))))
+             (catch Throwable e (failure e)))))
     (on-complete [_ f]
       (let [v @value]
         (if (= v ::incomplete)
@@ -72,14 +64,14 @@
     (deref [_] @value)
 
     Object
-    (equals [_ o] (and (satisfies? Future o) (= value (deref o))))
+    (equals [this o] (equal? this o Right #(= value @o)))
     (hashCode [_] (hash value))
     (toString [_] (str "Future " (deref value)))
 
     Functor
     (-fmap [m f]
       (let [p (promise)]
-        (on-complete m (fn [a] (complete p (match-try a f identity))))
+        (on-complete m (fn [a] (complete p (match-result a f identity))))
         (->future p)))
 
     Pure
@@ -94,8 +86,7 @@
         (on-complete
           m (fn [a]
               (if (satisfies? Success a)
-                (on-complete
-                  (failed-only (f (deref a))) (fn [b] (complete p b)))
+                (on-complete (failed-only (f (deref a))) (fn [b] (complete p b)))
                 (complete p a))))
         (->future p)))))
 
@@ -103,7 +94,7 @@
 
 (defn ^Future future-fn [f]
   (let [p (promise)]
-    (execute (fn [] (complete p (try-fn f))))
+    (execute (fn [] (complete p (result-fn f))))
     (->future p)))
 
 (defn ^Future immediate [v]
@@ -117,7 +108,7 @@
     (->future p)))
 
 (defn- failed-only [f]
-  (try f (catch Throwable e (fatal?! e) (failed e))))
+  (try f (catch Throwable e (failed e))))
 
 ;; macros
 

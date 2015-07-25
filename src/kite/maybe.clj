@@ -22,7 +22,7 @@
     (deref [_] v)
 
     Object
-    (equals [_ o] (and (satisfies? Just o) (= v (value o))))
+    (equals [this o] (equal? this o Just #(= v @o)))
     (hashCode [_] (hash v))
     (toString [_] (str "Just " v))
 
@@ -39,7 +39,7 @@
     (-bind [_ f] (f v))
 
     IMatchLookup
-    (val-at [_ k d] (case k ::just v d))))
+    (val-at [_ k d] (if (= Just k) v d))))
 
 (def nothing
   (reify
@@ -52,7 +52,8 @@
 
     IFn
     (invoke [_]
-      "To allow nothing to be called as a 0 arity function." nothing)
+      "To allow nothing to be called as a 0 arity function."
+      nothing)
 
     Functor
     (-fmap [_ _] nothing)
@@ -67,14 +68,14 @@
     (-bind [_ _] nothing)
 
     IMatchLookup
-    (val-at [_ k d] (case k ::nothing nil d))))
+    (val-at [_ k d] (if (= Nothing k) nil d))))
 
 (defn maybe
   ([v]
    (if v (just v) nothing))
   ([d f m]
    (matchm [m]
-           [{::just v}] (f v)
-           [{::nothing _}] d)))
+           [{Just v}] (f v)
+           [{Nothing _}] d)))
 
 ;; eof

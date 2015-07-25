@@ -16,7 +16,7 @@
 (load "kite/either")
 (load "kite/sequential")
 (load "kite/reader")
-(load "kite/try")
+(load "kite/result")
 (load "kite/future")
 
 (comment IDeref)

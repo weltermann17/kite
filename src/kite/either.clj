@@ -18,7 +18,7 @@
     (deref [_] v)
 
     Object
-    (equals [_ o] (and (satisfies? Right o) (= v (-right o))))
+    (equals [this o] (equal? this o Right #(= v @o)))
     (hashCode [_] (hash v))
     (toString [_] (str "Right " v))
 
@@ -29,7 +29,7 @@
     (-bind [_ f] (f v))
 
     IMatchLookup
-    (val-at [_ k d] (case k ::right v d))))
+    (val-at [_ k d] (if (= Right k) v d))))
 
 (defn left [v]
   (reify
@@ -41,7 +41,7 @@
     (deref [_] v)
 
     Object
-    (equals [_ o] (and (satisfies? Left o) (= v (-left o))))
+    (equals [this o] (equal? this o Left #(= v @o)))
     (hashCode [_] (hash v))
     (toString [_] (str "Left " v))
 
@@ -52,18 +52,18 @@
     (-bind [m _] m)
 
     IMatchLookup
-    (val-at [_ k d] (case k ::left v d))))
+    (val-at [_ k d] (if (= Left k) v d))))
 
 (defn either [l r e]
   (matchm [e]
-          [{::left v}] (l v)
-          [{::right v}] (r v)))
+          [{Left v}] (l v)
+          [{Right v}] (r v)))
 
 (defn mirror [e]
   "Needed for arrows."
   (matchm [e]
-          [{::left v}] (right v)
-          [{::right v}] (left v)))
+          [{Left v}] (right v)
+          [{Right v}] (left v)))
 
 (comment either mirror)
 

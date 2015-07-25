@@ -4,7 +4,7 @@
   (reify
     Object
     (toString [_] "Identity")
-    (equals [m o] (identical? m o))
+    (equals [this o] (identical? this o))
 
     Functor
     (-fmap [m _] m)
