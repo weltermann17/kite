@@ -13,15 +13,19 @@
 
 (defn <*>
   ([af] (fmap #(%) af))
-  ([af av & avs] (cond
-                   avs (apply <*> (<* af av) avs)
-                   (satisfies? Applicative af) (-ap af av)
-                   :else (<*>+ af av))))
+  ([af av & avs]
+   {:pre [af]}
+    ;(println (nil? avs) (satisfies? Monad af) (satisfies? Applicative af))
+   (cond
+     avs (apply <*> (<* af av) avs)
+     (satisfies? Applicative af) (-apply af av)
+     :else (<*>+ af av))))
 
 (defn <*
   ([af] af)
-  ([af a & r] (if r (apply <* (<* af a) r)
-                    (<*> (fmap (fn [f] #(partial f %)) af) a))))
+  ([af a & r]
+   (if r (apply <* (<* af a) r)
+         (<*> (fmap (fn [f] #(partial f %)) af) a))))
 
 (defn sequence-a [[a & as]]
   (apply <*> (pure a vector) a as))

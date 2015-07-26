@@ -2,17 +2,14 @@
 
 (defprotocol Either)
 
-(defprotocol Left
-  (-left [_]))
+(defprotocol Left)
 
-(defprotocol Right
-  (-right [_]))
+(defprotocol Right)
 
 (defn right [v]
   (reify
     Either
     Right
-    (-right [_] v)
 
     IDeref
     (deref [_] v)
@@ -35,7 +32,6 @@
   (reify
     Either
     Left
-    (-left [_] v)
 
     IDeref
     (deref [_] v)

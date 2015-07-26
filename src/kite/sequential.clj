@@ -11,7 +11,7 @@
   (-pure [_ v] [v])
 
   Applicative
-  (-ap [f v] (mapcat #(map % v) f))
+  (-apply [f v] (mapcat #(map % v) f))
 
   Monad
   (-bind [m f] (mapcat f m))

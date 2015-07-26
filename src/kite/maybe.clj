@@ -9,14 +9,12 @@
 
 (defprotocol Nothing)
 
-(defprotocol Just
-  (value [_]))
+(defprotocol Just)
 
 (defn just [v]
   (reify
     Maybe
     Just
-    (value [_] v)
 
     IDeref
     (deref [_] v)
@@ -33,7 +31,7 @@
     (-pure [_ u] (just u))
 
     Applicative
-    (-ap [_ m] (maybe nothing (comp just v) m))
+    (-apply [_ mv] (maybe nothing (comp just v) mv))
 
     Monad
     (-bind [_ f] (f v))
@@ -62,7 +60,7 @@
     (-pure [_ u] (just u))
 
     Applicative
-    (-ap [_ _] nothing)
+    (-apply [_ _] nothing)
 
     Monad
     (-bind [_ _] nothing)
@@ -72,7 +70,7 @@
 
 (defn maybe
   ([v]
-   (if v (just v) nothing))
+   (if v (try (just v) (catch Throwable e (fatal?! e) nothing)) nothing))
   ([d f m]
    (matchm [m]
            [{Just v}] (f v)

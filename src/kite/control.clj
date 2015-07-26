@@ -2,6 +2,6 @@
 
 (load "control/equality")
 (load "control/exception")
-(load "control/executor")
+(load "control/execution")
 
 ;; eof

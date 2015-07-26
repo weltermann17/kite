@@ -7,7 +7,7 @@
                           ThreadDeath
                           VirtualMachineError]))
 
-(defn fatal?!XX [^Throwable e]
+(defn fatal?! [^Throwable e]
   "If e is fatal then it is rethrown else it is simply returned."
   (if (fatal? e) (throw e) e))
 

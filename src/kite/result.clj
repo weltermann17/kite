@@ -11,6 +11,7 @@
 (declare match-result failure)
 
 (defn success [v]
+  {:pre [(fatal?! v)]}
   (reify
     Result
     Success
@@ -40,7 +41,7 @@
     (val-at [_ k d] (if (= Success k) v d))))
 
 (defn failure [v]
-  {:pre [(if (and (instance? Throwable v) (fatal? v)) (throw v) true)]}
+  {:pre [(or (fatal?! v) (nil? v))]}
   (reify
     Result
     Failure
@@ -71,14 +72,12 @@
 
 (defn match-result [r succ fail]
   (matchm [r]
-          [{Failure _}] (fail r)
-          [{Success _}] (succ r)))
+          [{Success _}] (succ r)
+          [{Failure _}] (fail r)))
 
 (defmacro result [& body]
   `(try
      (success (do ~@body))
      (catch Throwable e# (failure e#))))
-
-(defn result-fn [f] (result (f)))
 
 ;; eof

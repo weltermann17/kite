@@ -12,6 +12,7 @@
 (expect (just 1) (pure (just 2) 1))
 (expect (just 1) (pure (nothing) 1))
 (expect (just 9) (<*> (just inc) (just 8)))
+(expect nothing (>>= nothing #(just [%1 %1])))
 (expect (just 21) (<*> (just +) (just 8) (just 7) (just 6)))
 (expect (just -5) (<*> (just -) (just 8) (just 7) (just 6)))
 (expect (nothing) (<*> (just -) (just 8) (just 7) (nothing)))
@@ -24,6 +25,7 @@
 (expect (just [1 5 3]) (m-do [x (just 1)] (just 2) [:let y 5, z 3] (just [x y z])))
 (expect (just [1 5 3]) (m-do [x (just 1)] (just 2) [:let y 5, z 3] [:return [x y z]]))
 (expect (just [1 2]) (m-do [x (just 1) y (just 2)] [:return [x y]]))
+(expect (just 3) (m-do [x (just 1) y (just 2)] [:return (+ x y)]))
 (expect (nothing) (m-do [x (just 1) y (just 2) z (nothing)] [:return [x y z]]))
 (let [half (fn [x] (maybe (when (even? x) (quot x 2))))]
   (expect (just 2) (half 4))

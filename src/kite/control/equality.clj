@@ -8,4 +8,6 @@
       (satisfies? p b)
       (v))))
 
+(defn p [a] (if a (.toString a) a))
+
 ;; eof

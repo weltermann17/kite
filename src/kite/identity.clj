@@ -13,7 +13,7 @@
     (-pure [_ _] identity)
 
     Applicative
-    (-ap [m _] m)
+    (-apply [m _] m)
 
     Monad
     (-bind [m f] (f m))))

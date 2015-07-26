@@ -21,7 +21,7 @@
     (-pure [_ u] (fn [_] u))
 
     Applicative
-    (-ap [_ _] no-such-method!)
+    (-apply [_ _] no-such-method!)
 
     Monad
     (-bind [m f] (fn [r] ((f (m r)) r)))))

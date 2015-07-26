@@ -7,7 +7,7 @@
   (-pure [_ v]))
 
 (defprotocol Applicative
-  (-ap [a b]))
+  (-apply [a b]))
 
 (defprotocol Monad
   (-bind [m f]))

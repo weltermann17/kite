@@ -6,7 +6,7 @@
 
 (require
   '[clojure.core.strint :refer [<<]]
-  '[clojure.core.match :refer [matchm]]
+  '[clojure.core.match :refer [match matchm]]
   '[clojure.core.match.protocols :refer [IMatchLookup]]
   '[kite.control :refer :all]
   '[kite.category :refer :all])
