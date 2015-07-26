@@ -32,7 +32,18 @@
 ;(expect-focused (success 15) (await (<*> (future +) (future 8) (future 7)) 100))
 ;(expect (success 21) (await (<*> (lift +) (future 8) (future 7) (future 6)) 100))
 (let [fut (fn [w i] (future (Thread/sleep w) i))
-      f (ambiguous (fut 30 1) (fut 20 2) (fut 10 3))]
-  (expect (success 1) (await f 100)))                       ;; Todo: should be 3 with a 'real' executor
+      fut-fail (fn [w i] (future (Thread/sleep w) (/ i 0)))
+      f1 (first-result (fut 30 1) (fut 20 2) (fut 10 3))
+      f2 (first-success (fut 30 1) (fut 20 2) (fut 10 3))
+      f3 (first-result (fut-fail 30 1) (fut 20 2) (fut 10 3))
+      f4 (first-success (fut-fail 30 1) (fut-fail 20 2) (fut 10 3))
+      f5 (first-success (fut-fail 30 1) (fut-fail 20 2) (fut-fail 10 3))
+      ]
+  (expect (success 1) (await f1 100))                       ;; should be 3
+  (expect (success 1) (await f2 100))                       ;; should be 3
+  (expect (partial satisfies? Failure) (await f3 100))      ;; should be 3
+  (expect (success 3) (await f4 100))
+  (expect (partial satisfies? Failure) (await f5 100))
+  )
 
 ;; eof

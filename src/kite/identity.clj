@@ -1,6 +1,6 @@
 (in-ns 'kite)
 
-(def identitymonad
+(def identity-m
   (reify
     Object
     (toString [_] "Identity")
@@ -18,6 +18,6 @@
     Monad
     (-bind [m f] (f m))))
 
-(comment identitymonad)
+(comment identity-m)
 
 ;; eof

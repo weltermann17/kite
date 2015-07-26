@@ -1,5 +1,9 @@
 (in-ns 'kite.category)
 
+(defprotocol Category
+  (-id [_])
+  (-comp [a b]))
+
 (defprotocol Functor
   (-fmap [v f]))
 

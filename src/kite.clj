@@ -15,6 +15,7 @@
 (load "kite/maybe")
 (load "kite/either")
 (load "kite/sequential")
+(load "kite/function")
 (load "kite/reader")
 (load "kite/result")
 (load "kite/future")

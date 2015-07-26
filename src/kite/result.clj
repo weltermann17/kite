@@ -70,7 +70,8 @@
     IMatchLookup
     (val-at [_ k d] (if (= Failure k) v d))))
 
-(defn match-result [r succ fail]
+(defn if-result [r succ fail]
+  "If 'r' is success apply 'succ' to it else apply 'fail'."
   (matchm [r]
           [{Success _}] (succ r)
           [{Failure _}] (fail r)))

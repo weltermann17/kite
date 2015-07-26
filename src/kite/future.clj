@@ -75,7 +75,7 @@
     Functor
     (-fmap [this f]
       (let [p (promise)]
-        (on-complete this (fn [a] (complete p (match-result a f identity))))
+        (on-complete this (fn [a] (complete p (if-result a f identity))))
         (->future p)))
 
     Pure
@@ -119,12 +119,22 @@
      (execute (fn [] (complete p# (result ~@body))))
      (->future p#)))
 
-;; utilities
+;; utility functions
 
-(defn ambiguous [& fs]
+(defn first-result [& fs]
+  "Returns the first success or the first failure and discards the rest."
   (let [p (promise)]
     (doseq [f fs]
       (on-complete f (fn [v] (try (complete p v) (catch IllegalStateException _)))))
+    (->future p)))
+
+(defn first-success [& fs]
+  "Returns the first success or if all fail the last failure."
+  (let [p (promise)
+        c (volatile! (count fs))
+        succ (fn [v] (try (complete p v) (catch IllegalStateException _)))
+        fail (fn [v] (when (= 0 (vswap! c dec)) (complete p v)))]
+    (doseq [f fs] (on-complete f (fn [a] (if-result a succ fail))))
     (->future p)))
 
 ;; eof

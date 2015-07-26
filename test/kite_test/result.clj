@@ -2,7 +2,7 @@
 
 (expect (type @(result (/ 2 0))) (type @(result (/ 1 0))))
 (expect nil (deref (failure nil)))
-(expect ArithmeticException (throw (deref (match-result (result (/ 1 0)) inc identity))))
+(expect ArithmeticException (throw (deref (if-result (result (/ 1 0)) inc identity))))
 (expect ArithmeticException (throw (deref (fmap inc (result (/ 1 0))))))
 (expect OutOfMemoryError (failure (OutOfMemoryError.)))
 (expect (partial satisfies? Failure) (failure (ArithmeticException.)))
