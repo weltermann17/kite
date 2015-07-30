@@ -10,33 +10,35 @@
 
 (declare just?)
 
-(defn just [v]
-  (reify
-    Maybe
-    Just
+(def just
+  (memoize
+    (fn [v]
+      (reify
+        Maybe
+        Just
 
-    IDeref
-    (deref [_] v)
+        IDeref
+        (deref [_] v)
 
-    Object
-    (equals [this o] (equal? this o Just #(= v @o)))
-    (hashCode [_] (hash v))
-    (toString [_] (str "Just " v))
+        Object
+        (equals [this o] (equal? this o Just #(= v @o)))
+        (hashCode [_] (hash v))
+        (toString [_] (str "Just " v))
 
-    Functor
-    (-fmap [_ f] (just (f v)))
+        Functor
+        (-fmap [_ f] (just (f v)))
 
-    Pure
-    (-pure [_ u] (just u))
+        Pure
+        (-pure [_ u] (just u))
 
-    Applicative
-    (-apply [_ mv] (just? mv (comp just v) nothing))
+        Applicative
+        (-apply [_ mv] (just? mv (comp just v) nothing))
 
-    Monad
-    (-bind [_ f] (f v))
+        Monad
+        (-bind [_ f] (f v))
 
-    IMatchLookup
-    (val-at [_ k d] (if (= Just k) v d))))
+        IMatchLookup
+        (val-at [_ k d] (if (= Just k) v d))))))
 
 (def nothing
   (reify

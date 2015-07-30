@@ -10,35 +10,37 @@
 
 (declare match-result failure)
 
-(defn success [v]
-  {:pre [(fatal?! v)]}
-  (reify
-    Result
-    Success
-    (-success [_] v)
+(def success
+  (memoize
+    (fn [v]
+      {:pre [(fatal?! v)]}
+      (reify
+        Result
+        Success
+        (-success [_] v)
 
-    IDeref
-    (deref [_] v)
+        IDeref
+        (deref [_] v)
 
-    Object
-    (equals [this o] (equal? this o Success #(= v @o)))
-    (hashCode [_] (hash v))
-    (toString [_] (str "Success " v))
+        Object
+        (equals [this o] (equal? this o Success #(= v @o)))
+        (hashCode [_] (hash v))
+        (toString [_] (str "Success " v))
 
-    Functor
-    (-fmap [_ f] (success (f v)))
+        Functor
+        (-fmap [_ f] (success (f v)))
 
-    Pure
-    (-pure [_ u] (success u))
+        Pure
+        (-pure [_ u] (success u))
 
-    ;Applicative
-    ;(-ap [_ m] (match-result m (comp success v) (failure v)))
+        ;Applicative :todo:
+        ;(-ap [_ m] (match-result m (comp success v) (failure v)))
 
-    Monad
-    (-bind [_ f] (try (f v) (catch Throwable e (failure e))))
+        Monad
+        (-bind [_ f] (try (f v) (catch Throwable e (failure e))))
 
-    IMatchLookup
-    (val-at [_ k d] (if (= Success k) v d))))
+        IMatchLookup
+        (val-at [_ k d] (if (= Success k) v d))))))
 
 (defn failure [v]
   {:pre [(or (fatal?! v) (nil? v))]}
@@ -60,9 +62,6 @@
 
     Pure
     (-pure [_ u] (success u))
-
-    ;Applicative
-    ;(-ap [_ m] no-such-method!)
 
     Monad
     (-bind [m _] m)

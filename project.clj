@@ -3,6 +3,7 @@
   :description "A conglomeration from different monad libraries."
   :jar-name "kite.jar"
   :release-tasks [["clean"]
+                  ["expectations"]
                   ["check"]
                   ["jar"]]
   :dependencies [[org.clojure/clojure "1.8.0-alpha2"]

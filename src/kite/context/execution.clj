@@ -32,15 +32,20 @@
 ;; many helpers
 
 (defn- default-error-reporter []
-  (reader-m (fn [m e] (println "default-reporter:" m ":" e))))
+  (reader (fn [m ^Throwable e] (println "default-reporter:" m ":" (.toString e)))))
 
-(defn- default-uncaught-exception-handler []
-  (m-do [r (asks :error-reporter)]
+(defn- ^Thread$UncaughtExceptionHandler default-uncaught-exception-handler []
+  (m-do [r (asks :error-reporter)
+         c (asks :forkjoin-parallelism-factor)]
         [:return (reify Thread$UncaughtExceptionHandler
-                   (uncaughtException [_ t e] (r t e)))]))
+                   (uncaughtException [_ t e] (r (str c t) e)))]))
+
+(defn- default-thread-factory []
+  (m-do [^Thread$UncaughtExceptionHandler handler (asks :uncaught-exception-handler)]
+        [:return (fn [^String s] (.uncaughtException handler (Thread.) (Exception. s)))]))
 
 (defn- default-forkjoin-parallelism-factor []
-  (reader-m 2.0))
+  (reader 2.0))
 
 ;; configuration
 
@@ -48,6 +53,7 @@
   [error-reporter
    uncaught-exception-handler
    forkjoin-parallelism-factor
+   thread-factory
    ])
 
 (defn- default-execution-configuration []
@@ -55,35 +61,22 @@
     {:error-reporter              (default-error-reporter)
      :uncaught-exception-handler  (default-uncaught-exception-handler)
      :forkjoin-parallelism-factor (default-forkjoin-parallelism-factor)
+     :thread-factory              (default-thread-factory)
      }))
-
-(defn test1 [config]
-  ((run-reader (:forkjoin-parallelism-factor (default-execution-configuration))) config))
-
-(defn test2 [config]
-  ((run-reader (:error-reporter (default-execution-configuration))) config))
-
-(defn test3 [c1]
-  (let [c2
-        {:error-reporter
-         ((run-reader
-            (:error-reporter (default-execution-configuration))) c1)}]
-    ((run-reader
-       (:uncaught-exception-handler (default-execution-configuration))) c2)))
 
 (defn mk-config [config]
   {:pre  [(instance? IPersistentMap config)]
    :post [(instance? IPersistentMap %)]}
   (let [c (merge (default-execution-configuration) config)
         readers (select-keys c (for [[k v] c :when (satisfies? Reader v)] k))
-        run-readers (into {} (for [[k v] readers] [k ((run-reader v) c)]))
-        run-readers-2 (into {} (for [[k v] readers] [k ((run-reader v) run-readers)]))
-        final-config (merge config run-readers-2)
+        run-readers-1 (into {} (for [[k v] readers] [k ((run-reader v) c)]))
+        run-readers-2 (into {} (for [[k v] readers] [k ((run-reader v) run-readers-1)]))
+        run-readers-3 (into {} (for [[k v] readers] [k ((run-reader v) run-readers-2)]))
+        final-config (merge config run-readers-3)
         still-readers (select-keys final-config (for [[k v] final-config :when (satisfies? Reader v)] k))]
-    ;(println "c" c)
-    ;(println "readers" readers)
-    (println "run-readers" run-readers)
-    (println "run-readers-2" run-readers-2)
+    ;(clojure.pprint/pprint run-readers-1)
+    ;(clojure.pprint/pprint run-readers-2)
+    ;(clojure.pprint/pprint run-readers-3)
     ;(println "final" final-config)
     ;(println "still-readers" still-readers)
     final-config
