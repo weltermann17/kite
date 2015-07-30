@@ -1,4 +1,4 @@
-(in-ns 'kite)
+(in-ns 'kite.monad)
 
 (def identity-monad
   "Why do we actually have this?"

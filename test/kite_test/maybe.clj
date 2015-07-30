@@ -25,7 +25,7 @@
 (expect (just [1 5 3]) (m-do [x (just 1)] (just 2) [:let y 5, z 3] (just [x y z])))
 (expect (just [1 5 3]) (m-do [x (just 1)] (just 2) [:let y 5, z 3] [:return [x y z]]))
 (expect (just [1 2]) (m-do [x (just 1) y (just 2)] [:return [x y]]))
-(expect (just 3) (m-do [x (just 1) y (just 2)] [:return (+ x y)]))
+(expect (just 4) (m-do [x (just 1) y (just (+ 2 x))] [:return (+ x y)]))
 (expect (nothing) (m-do [x (just 1) y (just 2) z (nothing)] [:return [x y z]]))
 (let [half (fn [x] (maybe (when (even? x) (quot x 2))))]
   (expect (just 2) (half 4))

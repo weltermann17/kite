@@ -3,8 +3,11 @@
 
 (require '[expectations :refer :all]
          '[kite.category :refer :all]
-         '[kite :refer :all])
+         '[kite.context :refer :all]
+         '[kite.monad :refer :all]
+         '[kite.concurrent :refer :all])
 
+(load "kite_test/execution")
 (load "kite_test/sequential")
 (load "kite_test/maybe")
 (load "kite_test/either")

@@ -1,10 +1,13 @@
-(in-ns 'kite)
+(in-ns 'kite.concurrent)
 
 (import
+  [clojure.lang IDeref]
   [java.util.concurrent Phaser TimeoutException TimeUnit])
 
+
 (require
-  '[kite.control :refer :all])
+  '[kite.control :refer :all]
+  '[kite.monad :refer :all])
 
 ;; protocols
 

@@ -1,4 +1,4 @@
-(in-ns 'kite)
+(in-ns 'kite.monad)
 
 (defprotocol Reader
   (run-reader [env]))
@@ -23,10 +23,16 @@
     Monad
     (-bind [_ f] (reader (fn [k] ((run-reader (f (r k))) k))))))
 
-(defn ask [] (reader (fn [env] (identity env))))
+(defn ask [] (reader (fn [r] (identity r))))
 
-(defn asks [f] (reader (fn [env] (f env))))
+(defn asks [f] (reader (fn [r] (f r))))
 
-(defn local [f g] (reader (fn [env] ((run-reader g) (f env)))))
+(defn local [f g] (reader (fn [r] ((run-reader g) (f r)))))
+
+;; macro
+
+(defmacro reader-m [& body]
+  `(m-do [e# (ask)]
+         [:return ~@body]))
 
 ;; eof
