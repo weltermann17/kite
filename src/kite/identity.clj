@@ -1,9 +1,10 @@
 (in-ns 'kite)
 
-(def identity-m
+(def identity-monad
+  "Why do we actually have this?"
   (reify
     Object
-    (toString [_] "Identity")
+    (toString [_] "IdentityMonad")
     (equals [this o] (identical? this o))
 
     Functor
@@ -18,6 +19,6 @@
     Monad
     (-bind [m f] (f m))))
 
-(comment identity-m)
+(comment identity-monad)
 
 ;; eof

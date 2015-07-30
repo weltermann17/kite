@@ -15,8 +15,7 @@
   (throw (IllegalStateException. s)))
 
 (defn no-such-method! [^String s]
+  "Mainly used to signal 'not yet implemented' during development."
   (throw (NoSuchMethodException. s)))
-
-(comment no-such-method!)
 
 ;; eof

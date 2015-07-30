@@ -14,7 +14,7 @@
   (on-complete [_ f]))
 
 (defprotocol Promise
-  (complete [_ v])
+  (complete [_ v] "Calls illegal-state! if called more than once.")
   (^Future ->future [_]))
 
 ;; types
@@ -75,25 +75,22 @@
     Functor
     (-fmap [this f]
       (let [p (promise)]
-        (on-complete this (fn [a] (complete p (if-result a f identity))))
+        (on-complete this (fn [a] (complete p (success? a f identity))))
         (->future p)))
 
     Pure
     (-pure [_ u] (immediate u))
 
-    ;Applicative
-    ;(-apply [m f] ((lift #(% %2)) m f))
+    ; Todo: causes stack overflow
+    ; Applicative
+    ; (-apply [m f] ((lift #(% %2)) m f))
 
     Monad
     (-bind [this f]
-      (let [p (promise)]
-        (on-complete
-          this
-          (fn [a]
-            {:pre [(satisfies? Result a)]}
-            (matchm a
-                    {Success v} (on-complete (failed-only (f v)) (fn [b] (complete p b)))
-                    {Failure _} (complete p a))))
+      (let [p (promise)
+            succ (fn [a] (on-complete (failed-only (f @a)) (fn [b] (complete p b))))
+            fail (fn [a] (complete p a))]
+        (on-complete this (fn [a] (success? a succ fail)))
         (->future p)))))
 
 ;; fn
@@ -119,7 +116,7 @@
      (execute (fn [] (complete p# (result ~@body))))
      (->future p#)))
 
-;; utility functions
+;; utility fn
 
 (defn first-result [& fs]
   "Returns the first success or the first failure and discards the rest."
@@ -132,9 +129,9 @@
   "Returns the first success or if all fail the last failure."
   (let [p (promise)
         c (volatile! (count fs))
-        succ (fn [v] (try (complete p v) (catch IllegalStateException _)))
-        fail (fn [v] (when (= 0 (vswap! c dec)) (complete p v)))]
-    (doseq [f fs] (on-complete f (fn [a] (if-result a succ fail))))
+        succ (fn [a] (try (complete p a) (catch IllegalStateException _)))
+        fail (fn [a] (when (= 0 (vswap! c dec)) (complete p a)))]
+    (doseq [f fs] (on-complete f (fn [a] (success? a succ fail))))
     (->future p)))
 
 ;; eof

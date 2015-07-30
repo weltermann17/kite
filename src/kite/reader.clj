@@ -1,37 +1,32 @@
 (in-ns 'kite)
 
-(defprotocol Reader)
+(defprotocol Reader
+  (run-reader [env]))
 
-(defn reader [v]
+(defn reader [r]
+  "This is probably the most difficult one, for a Scala guy that is."
   (reify
     Reader
-
-    IDeref
-    (deref [_] v)
+    (run-reader [_] r)
 
     Object
-    (equals [this o] (equal? this o Reader #(= v @o)))
-    (hashCode [_] (hash v))
-    (toString [_] (str "Reader " v))
+    (equals [this o] (equal? this o Reader #(= r (run-reader o))))
+    (hashCode [_] (hash r))
+    (toString [_] (str "Reader " r))
 
     Functor
-    (-fmap [_ f] (reader (f v)))
+    (-fmap [_ f] (f r))
 
     Pure
-    (-pure [_ u] (fn [_] u))
-
-    Applicative
-    (-apply [_ _] no-such-method!)
+    (-pure [_ u] (reader (fn [_] u)))
 
     Monad
-    (-bind [m f] (fn [r] ((f (m r)) r)))))
+    (-bind [_ k] (reader (fn [g] ((run-reader (k (r g))) g))))))
 
-(defn ask [] identity)
+(defn ask [] (reader (fn [] identity)))
 
-(defn asks [f] (fn [r] (f r)))
+(defn asks [f] (reader (fn [env] (f env))))
 
-(defn local [f g] (fn [r] (g (f r))))
-
-(comment ask asks local reader)
+(defn local [f g] (reader (fn [r] (g (f r)))))
 
 ;; eof

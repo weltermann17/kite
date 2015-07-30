@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [await future promise]))
 
 (import
-  [clojure.lang IDeref])
+  [clojure.lang IDeref IFn])
 
 (require
   '[clojure.core.strint :refer [<<]]
@@ -20,6 +20,6 @@
 (load "kite/result")
 (load "kite/future")
 
-(comment IDeref)
+(comment IDeref IFn)
 
 ;; eof

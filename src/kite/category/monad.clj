@@ -8,10 +8,11 @@
 
 (defn >>=
   ([m] m)
-  ([m f & fs] (cond
-                fs (apply >>= (>>= m f) fs)
-                (satisfies? Monad m) (-bind m f)
-                :else (>>=+ m f))))
+  ([m f & fs]
+   (cond
+     fs (apply >>= (>>= m f) fs)
+     (satisfies? Monad m) (-bind m f)
+     :else (>>=+ m f))))
 
 (defmethod <*>+ ::monad [af av]
   (>>= af (fn [f] (>>= av (fn [v] (pure af (f v)))))))
@@ -44,11 +45,6 @@
 
 (defmacro m-do [& body]
   (m-do* body))
-
-(defn lift-without-stack-overflow [f]
-  (fn [ma mb] (m-do [a ma
-                     b mb]
-                    [(pure ma (f a b))])))
 
 (defn lift [f]
   (fn [& m-args] (m-do [args (sequence-a m-args)]
