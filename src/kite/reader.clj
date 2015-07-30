@@ -21,12 +21,12 @@
     (-pure [_ u] (reader (fn [_] u)))
 
     Monad
-    (-bind [_ k] (reader (fn [g] ((run-reader (k (r g))) g))))))
+    (-bind [_ f] (reader (fn [k] ((run-reader (f (r k))) k))))))
 
-(defn ask [] (reader (fn [] identity)))
+(defn ask [] (reader (fn [env] (identity env))))
 
 (defn asks [f] (reader (fn [env] (f env))))
 
-(defn local [f g] (reader (fn [r] (g (f r)))))
+(defn local [f g] (reader (fn [env] (g (f env)))))
 
 ;; eof
