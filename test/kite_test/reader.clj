@@ -13,10 +13,12 @@
 
 (let [ctx (reify T (a [_] 1) (b [_] 2) (c [_] 3))
       m1 (m-do [e (asks b) f (asks c)] [:return [e f]])
-      m2 (m-do [a (ask)] [:return a])]
+      m2 (m-do [e (ask) f (local inc (ask))] [:return (* e f)])
+      m3 (m-do [e (asks b) f (asks c) a (ask)] [:return a])]
   (expect (partial satisfies? Monad) m1)
   (expect [2 3] ((run-reader m1) ctx))
-  (expect ctx ((run-reader m2) ctx))
+  (expect 30 ((run-reader m2) 5))
+  (expect ctx ((run-reader m3) ctx))
   )
 
 ;; eof

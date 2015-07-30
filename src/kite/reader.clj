@@ -27,6 +27,6 @@
 
 (defn asks [f] (reader (fn [env] (f env))))
 
-(defn local [f g] (reader (fn [env] (g (f env)))))
+(defn local [f g] (reader (fn [env] ((run-reader g) (f env)))))
 
 ;; eof
