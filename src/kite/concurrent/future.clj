@@ -12,6 +12,7 @@
 ;; protocols
 
 (defprotocol Future
+  "Future is a Monad."
   (^Result await [_ milliseconds]
     "Should be used for testing only. Milliseconds must be > 0.")
   (on-complete [_ f]))
@@ -24,7 +25,7 @@
 
 (declare mk-future)
 
-(defn ^Promise promise []
+(defn promise []
   (let [value (volatile! ::incomplete)
         callbacks (volatile! [])
         future (mk-future value callbacks)]
@@ -46,7 +47,7 @@
 
 (declare failed-only future immediate)
 
-(defn- ^Future mk-future [value callbacks]
+(defn- mk-future [value callbacks]
   (reify
     Future
     (await [this milliseconds]
@@ -94,27 +95,30 @@
             succ (fn [a] (on-complete (failed-only (f @a)) (fn [b] (complete p b))))
             fail (fn [a] (complete p a))]
         (on-complete this (fn [a] (success? a succ fail)))
-        (->future p)))))
+        (->future p)))
+
+    ; Todo: add MonadPlus
+    ))
 
 ;; fn
 
-(defn ^Future immediate [v]
+(defn immediate [v]
   (let [p (promise)]
     (complete p (success v))
     (->future p)))
 
-(defn ^Future failed [v]
+(defn failed [v]
   (let [p (promise)]
     (complete p (failure v))
     (->future p)))
 
-(defn- ^Future failed-only [f]
+(defn- failed-only [f]
   {:post [(satisfies? Future %)]}
   (try f (catch Throwable e (failed e))))
 
 ;; macro
 
-(defmacro ^Future future [& body]
+(defmacro future [& body]
   `(let [p# (promise)]
      (execute (fn [] (complete p# (result ~@body))))
      (->future p#)))

@@ -3,7 +3,7 @@
 (defprotocol Reader
   (run-reader [env]))
 
-(defn- ^Reader mk-reader [r]
+(defn- mk-reader [r]
   "This is probably the most difficult one, for a Scala guy that is."
   (reify
     Reader
@@ -23,15 +23,15 @@
     Monad
     (-bind [_ f] (mk-reader (fn [k] ((run-reader (f (r k))) k))))))
 
-(defn ^Reader ask [] (mk-reader (fn [r] (identity r))))
+(defn ask [] (mk-reader (fn [r] (identity r))))
 
-(defn ^Reader asks [f] (mk-reader (fn [r] (f r))))
+(defn asks [f] (mk-reader (fn [r] (f r))))
 
-(defn ^Reader local [f g] (mk-reader (fn [r] ((run-reader g) (f r)))))
+(defn local [f g] (mk-reader (fn [r] ((run-reader g) (f r)))))
 
 ;; macro
 
-(defmacro ^Reader reader [& body]
+(defmacro reader [& body]
   `(m-do [_# (ask)]
          [:return ~@body]))
 

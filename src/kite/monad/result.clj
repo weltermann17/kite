@@ -33,11 +33,13 @@
         Pure
         (-pure [_ u] (success u))
 
-        ;Applicative :todo:
+        ;Applicative :todo: how to implement?
         ;(-ap [_ m] (match-result m (comp success v) (failure v)))
 
         Monad
         (-bind [_ f] (try (f v) (catch Throwable e (failure e))))
+
+        ; Todo: add MonadPlus
 
         IMatchLookup
         (val-at [_ k d] (if (= Success k) v d))))))
