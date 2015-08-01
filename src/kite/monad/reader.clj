@@ -30,7 +30,6 @@
 (defn local [f g] (mk-reader (fn [r] ((run-reader g) (f r)))))
 
 (defn reader [f]
-  (m-do [_ (ask)]
-        [:return f]))
+  (m-do [_ (ask)] [:return f]))
 
 ;; eof

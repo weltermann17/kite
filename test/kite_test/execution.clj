@@ -5,6 +5,8 @@
        :executor-policy             (reader :threadpool)
        :forkjoin-parallelism-factor (reader 2.0)
        :forkjoin-parallelism        (reader 12)
+       :threadpool-minimum-size     (reader 200)
+       :threadpool-maximum-size     (reader (+ 200 1))
        :forkjoin-error-reporter     (reader (fn [m e] (println "my-own-reporter" e "<-" m)))
        }
       all (mk-config (default-execution-configuration) config)
@@ -16,7 +18,6 @@
   (reporter "x" "y")
   ;(.uncaughtException handler (Thread.) (Exception. "test"))
   ;(.uncaughtException (:forkjoin-uncaught-exception-handler default) (Thread.) (Exception.))
-  (println (:threadpool-blocking-queue all))
   (println (:executor all))
   )
 

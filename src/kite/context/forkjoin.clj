@@ -26,7 +26,7 @@
   "Computed from the parallelism factor and the number of available cores."
   (m-do [fac (asks :forkjoin-parallelism-factor)]
         [:let _ (check-type Number fac)]
-        [:return (int (* fac (number-of-cores)))]))
+        [:return (long (* fac (number-of-cores)))]))
 
 (defn- default-forkjoin-thread-factory []
   (m-do [uncaught (asks :forkjoin-uncaught-exception-handler)]
@@ -45,7 +45,7 @@
          uncaught (asks :forkjoin-uncaught-exception-handler)
          async (asks :forkjoin-async-mode)]
         [:let
-         _ (check-type Number parallelism)
+         _ (check-type Long parallelism)
          _ (check-type ForkJoinPool$ForkJoinWorkerThreadFactory threadfactory)
          _ (check-type Thread$UncaughtExceptionHandler uncaught)
          _ (check-type Boolean async)
