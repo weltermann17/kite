@@ -43,15 +43,27 @@
    threadpool-executor
    ; single-threaded for testing purposes only
    single-threaded-thread-factory
+   single-threaded-executor
    ])
+
+(defn- default-executor []
+  (m-do [policy (asks :executor-policy)
+         executor (case policy
+                    :forkjoin (asks :forkjoin-executor)
+                    :threadpool (asks :threadpool-executor)
+                    :single-threaded (asks :single-threaded-executor)
+                    (invalid-config! policy ":executor-policy must be one of :forkjoin :threadpool :single-threaded"))]
+        [:return executor]))
 
 (defn- default-executor-policy []
   "One of :forkjoin :threadpool :single-threaded"
-  :forkjoin)
+  (reader :forkjoin))
 
 (defn default-execution-configuration []
   (map->ExecutionConfiguration
-    {:executor-policy                    (default-executor-policy)
+    {
+     :executor                           (default-executor)
+     :executor-policy                    (default-executor-policy)
      :error-reporter                     (default-error-reporter)
      :uncaught-exception-handler         (default-uncaught-exception-handler)
      :forkjoin-parallelism-factor        (default-forkjoin-parallelism-factor)
@@ -66,7 +78,8 @@
      :threadpool-blocking-queue-capacity (default-threadpool-blocking-queue-capacity)
      :threadpool-blocking-queue          (default-threadpool-blocking-queue)
      :threadpool-executor                (default-threadpool-executor)
-
+     :single-threaded-thread-factory     (default-single-threaded-thread-factory)
+     :single-threaded-executor           (default-single-threaded-executor)
      }))
 
 ;; eof
