@@ -29,10 +29,8 @@
 
 (defn local [f g] (mk-reader (fn [r] ((run-reader g) (f r)))))
 
-;; macro
-
-(defmacro reader [& body]
-  `(m-do [_# (ask)]
-         [:return ~@body]))
+(defn reader [f]
+  (m-do [_ (ask)]
+        [:return f]))
 
 ;; eof

@@ -7,15 +7,14 @@
   '[clojure.reflect :refer [typename]])
 
 (defn- reduce-readers [n readers initial]
+  "Functional rules!"
   (loop [i 1
          c initial]
     (if (> i n)
       c
-      (recur
-        (inc i)
-        (into {} (for
-                   [[k v] readers]
-                   [k (try-or-else ((run-reader v) c) v)]))))))
+      (recur (inc i)
+             (into {} (for [[k v] readers]
+                        [k (try-or-else ((run-reader v) c) v)]))))))
 
 (defn mk-config
   ([default config] (mk-config 5 default config))
@@ -39,8 +38,14 @@
      (info! (<< "Invalid configuration: ~{msg} (value: ~{e})") data cause)))
   )
 
-(defn valid-type?! [t e]
+(defn check-type [t e]
+  "Throws an informational exception if 'e' is not of type 't' and not a Reader."
   (when-not (instance? t e)
     (invalid-config! e (<< "'~{e}' is not a '~{(typename t)}', but a '~{(typename (type e))}'"))))
+
+(defmacro check-cond [cond]
+  "Throws an informational exception if 'cond' is not true."
+  `(when-not ~cond
+     (info! (str "Invalid configuration: assertion failed : " '~cond))))
 
 ;; eof
