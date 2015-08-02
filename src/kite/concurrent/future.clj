@@ -33,7 +33,7 @@
       Promise
       (complete [_ v]
         (if (= @value ::incomplete)
-          (do (vreset! value v) (execute-all @callbacks v))
+          (do (vreset! value v) (execute-all-t @callbacks v))
           (illegal-state! (<< "A promise cannot be completed more than once, value = ~{@value}, value not accepted = ~{v}"))))
       (->future [_] future)
 
@@ -66,7 +66,7 @@
       (let [v @value]
         (if (= v ::incomplete)
           (vswap! callbacks conj f)
-          (execute f v))))
+          (execute-t f v))))
 
     IDeref
     (deref [_] "Actually a double deref, because value is a volatile." @value)
@@ -120,7 +120,7 @@
 
 (defmacro future [& body]
   `(let [p# (promise)]
-     (execute (fn [] (complete p# (result ~@body))))
+     (execute-t (fn [] (complete p# (result ~@body))))
      (->future p#)))
 
 ;; utility fn

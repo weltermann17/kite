@@ -1,4 +1,4 @@
-(in-ns 'kite.context)
+(in-ns 'kite.execution)
 
 (import
   (java.util.concurrent
@@ -71,12 +71,12 @@
          _ (check-type ThreadFactory threadfactory)
          _ (check-type RejectedExecutionHandler rejection)]
         [:return
-         (ThreadPoolExecutor.
-           mn
-           mx
-           keepalive TimeUnit/MILLISECONDS
-           queue
-           threadfactory
-           rejection)]))
+         (fn [] (ThreadPoolExecutor.
+                  mn
+                  mx
+                  keepalive TimeUnit/MILLISECONDS
+                  queue
+                  threadfactory
+                  rejection))]))
 
 ;; eof

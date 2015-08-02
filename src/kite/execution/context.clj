@@ -1,12 +1,14 @@
-(in-ns 'kite.context)
+(in-ns 'kite.execution)
 
 (import
   (java.util.concurrent
-    ExecutorService))
+    ExecutorService
+    ScheduledExecutorService))
 
 ;; configuration
 
 (defn- default-executor []
+  "Remember, 'executor' is a arity-0 fn."
   (m-do [policy (asks :executor-policy)
          executor (case policy
                     :forkjoin (asks :forkjoin-executor)
@@ -16,7 +18,7 @@
         [:return executor]))
 
 (defn- default-executor-policy []
-  "One of :forkjoin :threadpool :single-threaded"
+  "Must be one in #{:forkjoin :threadpool :single-threaded}."
   (reader :forkjoin))
 
 (defn default-execution-configuration []
@@ -44,28 +46,21 @@
    :single-threaded-uncaught-exception-handler (default-single-threaded-uncaught-exception-handler)
    :single-threaded-thread-factory             (default-single-threaded-thread-factory)
    :single-threaded-executor                   (default-single-threaded-executor)
+   :scheduler-error-reporter                   (default-scheduler-error-reporter)
+   :scheduler-uncaught-exception-handler       (default-scheduler-uncaught-exception-handler)
+   :scheduler-thread-factory                   (default-scheduler-thread-factory)
+   :scheduler-minimum-size                     (default-scheduler-minimum-size)
+   :scheduler-executor                         (default-scheduler-executor)
    })
 
 ;; context
 
-(defprotocol BaseContext
-  (get-config [_])
-  (set-config [_ v]))
-
-(deftype Context [^:unsynchronized-mutable config]
-  BaseContext
-  (get-config [_] config)
-  (set-config [this v] (set! config v) this))
-
-(defprotocol ExecutorContext
-  (^ExecutorService executor [_]))
-
 (defn add-executor-context [context initial-config]
   (let [c (mk-config (default-execution-configuration) initial-config)
-        e (:executor c)]
-    (extend-type Context
-      ExecutorContext
-      (executor [_] e))
-    (set-config context c)))
+        ^ExecutorService e (apply (:executor c) [])
+        ^ScheduledExecutorService s (apply (:scheduler-executor c) [])]
+    (merge context
+           {:executor  e
+            :scheduler s})))
 
 ;; eof

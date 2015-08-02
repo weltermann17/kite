@@ -1,19 +1,9 @@
-(in-ns 'kite.context)
+(in-ns 'kite.execution)
 
 (import
   (java.util.concurrent
     ThreadFactory
     Executors))
-
-;; common stuff
-
-(defn- set-thread [^Thread t ^Thread$UncaughtExceptionHandler uncaught]
-  (doto t
-    (.setDaemon true)
-    (.setUncaughtExceptionHandler uncaught)))
-
-(defn- ^Integer number-of-cores []
-  (.availableProcessors (Runtime/getRuntime)))
 
 ;; single-threaded
 
@@ -35,7 +25,9 @@
 
 (defn- default-single-threaded-executor []
   (m-do [threadfactory (asks :single-threaded-thread-factory)]
-        [:let _ (check-type ThreadFactory threadfactory)]
-        [:return (Executors/newSingleThreadExecutor threadfactory)]))
+        [:let
+         _ (check-type ThreadFactory threadfactory)]
+        [:return
+         (fn [] (Executors/newSingleThreadExecutor threadfactory))]))
 
 ;; eof

@@ -3,6 +3,13 @@
 (import
   (clojure.lang ExceptionInfo))
 
+(require
+  '[clojure.pprint :refer [pprint]])
+
+;; common helpers
+
+(def pretty-print pprint)
+
 ;; fatal handling
 
 (defn fatal? [^Throwable e]

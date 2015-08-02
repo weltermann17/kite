@@ -1,10 +1,9 @@
-(in-ns 'kite.context)
+(in-ns 'kite.execution)
 
 (import
   (java.util.concurrent
     ForkJoinPool
     ForkJoinPool$ForkJoinWorkerThreadFactory
-    ForkJoinTask
     ForkJoinWorkerThread
     ForkJoinPool$ManagedBlocker
     RecursiveAction))
@@ -51,10 +50,10 @@
          _ (check-type Boolean async)
          _ (check-cond (>= parallelism 1))]
         [:return
-         (ForkJoinPool.
-           parallelism
-           threadfactory
-           uncaught
-           async)]))
+         (fn [] (ForkJoinPool.
+                  parallelism
+                  threadfactory
+                  uncaught
+                  async))]))
 
 ;; eof

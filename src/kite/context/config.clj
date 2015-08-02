@@ -7,7 +7,6 @@
   '[clojure.reflect :refer [typename]])
 
 (defn- reduce-readers [n readers initial]
-  "Functional rules!"
   (loop [i 1
          c initial]
     (if (> i n)
