@@ -50,10 +50,11 @@
          _ (check-type Thread$UncaughtExceptionHandler uncaught)
          _ (check-type Boolean async)
          _ (check-cond (>= parallelism 1))]
-        [:return (ForkJoinPool.
-                   parallelism
-                   threadfactory
-                   uncaught
-                   async)]))
+        [:return
+         (ForkJoinPool.
+           parallelism
+           threadfactory
+           uncaught
+           async)]))
 
 ;; eof

@@ -25,7 +25,8 @@
 
 (defn ask [] (mk-reader (fn [r] (identity r))))
 
-(defn asks [f] (mk-reader (fn [r] (f r))))
+(defn asks [f]
+  (mk-reader (fn [r] (f r))))
 
 (defn local [f g] (mk-reader (fn [r] ((run-reader g) (f r)))))
 

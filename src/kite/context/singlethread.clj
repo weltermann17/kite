@@ -3,9 +3,7 @@
 (import
   (java.util.concurrent
     ThreadFactory
-    Executors
-    ArrayBlockingQueue
-    ThreadPoolExecutor))
+    Executors))
 
 ;; common stuff
 

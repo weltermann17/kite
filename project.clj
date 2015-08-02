@@ -10,6 +10,7 @@
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [org.clojure/core.incubator "0.1.3"]
                  ; [org.clojure/algo.monads "0.1.5"]
+                 [criterium "0.4.3"]
                  [expectations "2.1.2"]]
   :source-paths ["src"]
   :target-path "target/")

@@ -6,10 +6,11 @@
   '[kite.category :refer :all]
   '[kite.monad :refer :all])
 
+;;(load "context/aspect")
 (load "context/config")
-(load "context/singlethreaded")
+(load "context/singlethread")
 (load "context/threadpool")
 (load "context/forkjoin")
-(load "context/execution")
+(load "context/executor")
 
 ;; eof

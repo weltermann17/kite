@@ -16,8 +16,10 @@
              (into {} (for [[k v] readers]
                         [k (try-or-else ((run-reader v) c) v)]))))))
 
+(def ^:private ^:const default-mk-config-reduce-by 5)
+
 (defn mk-config
-  ([default config] (mk-config 5 default config))
+  ([default config] (mk-config default-mk-config-reduce-by default config))
   ([reduce-by default config]
    {:pre  [(and (instance? IPersistentMap default) (instance? IPersistentMap config))]
     :post [(instance? IPersistentMap %)]}
@@ -25,6 +27,8 @@
          readers (select-keys all (for [[k v] all :when (satisfies? Reader v)] k))
          reduced (reduce-readers reduce-by readers all)]
      (merge all reduced))))
+
+;; error handling during configuration
 
 (defn invalid-config!
   "Throws an informational exception if 'e' is not a Reader 'anymore'."
@@ -39,7 +43,7 @@
   )
 
 (defn check-type [t e]
-  "Throws an informational exception if 'e' is not of type 't' and not a Reader."
+  "Throws an informational exception if 'e' is not of type 't', but only if 'e' is not a Reader."
   (when-not (instance? t e)
     (invalid-config! e (<< "'~{e}' is not a '~{(typename t)}', but a '~{(typename (type e))}'"))))
 

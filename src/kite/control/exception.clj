@@ -20,7 +20,7 @@
    "If e is fatal then it is rethrown else v is returned."
    (if (fatal? e) (throw e) v)))
 
-;; most common exceptions
+;; most common exceptions, for me that is
 
 (defn illegal-state! [^String s & fs]
   (throw (IllegalStateException. (str s fs))))
