@@ -5,10 +5,6 @@
   [java.util.concurrent Phaser TimeoutException TimeUnit])
 
 
-(require
-  '[kite.control :refer :all]
-  '[kite.monad :refer :all])
-
 ;; protocols
 
 (defprotocol Future
@@ -23,17 +19,19 @@
 
 ;; types
 
-(declare mk-future)
+(declare failed-only immediate mk-future)
+
+(def ^:private ^:const not-yet-completed ::not-yet-completed)
 
 (defn promise []
-  (let [value (volatile! ::incomplete)
-        callbacks (volatile! [])
+  (let [value (atom not-yet-completed)
+        callbacks (transient [])
         future (mk-future value callbacks)]
     (reify
       Promise
       (complete [_ v]
-        (if (= @value ::incomplete)
-          (do (vreset! value v) (execute-all-t @callbacks v))
+        (if (compare-and-set! value not-yet-completed v)
+          (mock-execute-all (persistent! callbacks) v)
           (illegal-state! (<< "A promise cannot be completed more than once, value = ~{@value}, value not accepted = ~{v}"))))
       (->future [_] future)
 
@@ -45,8 +43,6 @@
       (hashCode [_] (hash value))
       (toString [_] (str "Promise " value)))))
 
-(declare failed-only future immediate)
-
 (defn- mk-future [value callbacks]
   (reify
     Future
@@ -56,17 +52,20 @@
             {:pre [(> milliseconds 0)]}
             (let [phaser (Phaser. 1)]
               (on-complete this (fn [_] (.arriveAndDeregister phaser)))
-              (try (.awaitAdvanceInterruptibly phaser 0 milliseconds TimeUnit/MILLISECONDS)
-                   (deref value)
+              (try (.awaitAdvanceInterruptibly
+                     phaser
+                     0 milliseconds TimeUnit/MILLISECONDS)
+                   @value
                    (catch TimeoutException _
                      (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
-                   (catch Throwable e (failure e)))))]
+                   (catch Throwable e
+                     (failure e)))))]
         (f)))
     (on-complete [_ f]
       (let [v @value]
-        (if (= v ::incomplete)
-          (vswap! callbacks conj f)
-          (execute-t f v))))
+        (if (= v not-yet-completed)
+          (conj! callbacks f)
+          (mock-execute f v))))
 
     IDeref
     (deref [_] "Actually a double deref, because value is a volatile." @value)
@@ -85,9 +84,7 @@
     Pure
     (-pure [_ u] (immediate u))
 
-    ; Todo: causes stack overflow
     ; Applicative
-    ; (-apply [m f] ((lift #(% %2)) m f))
 
     Monad
     (-bind [this f]
@@ -97,7 +94,7 @@
         (on-complete this (fn [a] (success? a succ fail)))
         (->future p)))
 
-    ; Todo: add MonadPlus
+    ; MonadPlus
     ))
 
 ;; fn
@@ -120,7 +117,7 @@
 
 (defmacro future [& body]
   `(let [p# (promise)]
-     (execute-t (fn [] (complete p# (result ~@body))))
+     (mock-execute (fn [] (complete p# (result ~@body))))
      (->future p#)))
 
 ;; utility fn

@@ -20,6 +20,9 @@
     Pure
     (-pure [_ u] (mk-reader (fn [_] u)))
 
+    Applicative
+    (-apply [m _] m)
+
     Monad
     (-bind [_ f] (mk-reader (fn [k] ((run-reader (f (r k))) k))))))
 

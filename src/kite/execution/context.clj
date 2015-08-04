@@ -31,6 +31,8 @@
    :forkjoin-parallelism                       (default-forkjoin-parallelism)
    :forkjoin-thread-factory                    (default-forkjoin-thread-factory)
    :forkjoin-async-mode                        (default-forkjoin-async-mode)
+   :forkjoin-recursive-action                  (default-forkjoin-recursive-action)
+   :forkjoin-managed-blocker                   (default-forkjoin-managed-blocker)
    :forkjoin-executor                          (default-forkjoin-executor)
    :threadpool-error-reporter                  (default-threadpool-error-reporter)
    :threadpool-uncaught-exception-handler      (default-threadpool-uncaught-exception-handler)
@@ -61,6 +63,9 @@
         ^ScheduledExecutorService s (apply (:scheduler-executor c) [])]
     (merge context
            {:executor  e
-            :scheduler s})))
+            :scheduler s}
+           (when (instance? ForkJoinPool e)
+             {:recursive-action (:forkjoin-recursive-action c)
+              :managed-blocker  (:forkjoin-managed-blocker c)}))))
 
 ;; eof

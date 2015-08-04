@@ -4,7 +4,8 @@
 (require
   '[clojure.core.strint :refer [<<]]
   '[kite.control :refer :all]
-  '[kite.category :refer :all])
+  '[kite.category :refer :all]
+  '[kite.monad :refer :all])
 
 (load "concurrent/future")
 

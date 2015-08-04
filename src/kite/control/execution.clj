@@ -2,11 +2,11 @@
 
 ;; mocks and helpers
 
-(defn execute-t
-  ([f v] (execute-t (fn [] (f v))))
+(defn mock-execute
+  ([f v] (mock-execute (fn [] (f v))))
   ([f] (f)))
 
-(defn execute-all-t [fs v]
-  (doseq [f fs] (execute-t f v)))
+(defn mock-execute-all [fs v]
+  (doseq [f fs] (mock-execute f v)))
 
 ;; eof

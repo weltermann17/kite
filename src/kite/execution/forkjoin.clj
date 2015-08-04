@@ -38,6 +38,16 @@
 (defn- default-forkjoin-async-mode []
   (reader true))
 
+(defn- default-forkjoin-recursive-action []
+  (reader (fn [f] (proxy [RecursiveAction] [] (compute [] (f))))))
+
+(defn- default-forkjoin-managed-blocker []
+  (reader (fn [f]
+            (let [done (volatile! false)]
+              (reify ForkJoinPool$ManagedBlocker
+                (block [_] (try (f) (finally (vreset! done true))) true)
+                (isReleasable [_] @done))))))
+
 (defn- default-forkjoin-executor []
   (m-do [parallelism (asks :forkjoin-parallelism)
          threadfactory (asks :forkjoin-thread-factory)

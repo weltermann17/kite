@@ -15,7 +15,6 @@
   ([af] (fmap #(%) af))
   ([af av & avs]
    {:pre [af]}
-    ;(println (nil? avs) (satisfies? Monad af) (satisfies? Applicative af))
    (cond
      avs (apply <*> (<* af av) avs)
      (satisfies? Applicative af) (-apply af av)
