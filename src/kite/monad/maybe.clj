@@ -21,7 +21,7 @@
         (deref [_] v)
 
         Object
-        (equals [this o] (equal? this o Just #(= v @o)))
+        (equals [this o] (test-eq this o Just #(= v @o)))
         (hashCode [_] (hash v))
         (toString [_] (str "Just " v))
 

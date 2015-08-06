@@ -11,11 +11,14 @@
   "Future is a Monad."
   (^Result await [_ milliseconds]
     "Should be used for testing only. Milliseconds must be > 0.")
-  (on-complete [_ f]))
+  (on-complete [_ f]
+    "Adds callbacks executed on completion or calls them immediately if already completed."))
 
 (defprotocol Promise
-  (complete [_ v] "Calls illegal-state! if called more than once.")
-  (^Future ->future [_]))
+  (complete [_ v]
+    "Throws illegal-state! if called more than once.")
+  (^Future ->future [_]
+    "Return its corresponding future."))
 
 ;; types
 
@@ -24,90 +27,104 @@
 (def ^:private ^:const not-yet-completed ::not-yet-completed)
 
 (defn promise []
-  (let [value (atom not-yet-completed)
-        callbacks (transient [])
-        future (mk-future value callbacks)]
-    (reify
-      Promise
-      (complete [_ v]
-        (if (compare-and-set! value not-yet-completed v)
-          (mock-execute-all (persistent! callbacks) v)
-          (illegal-state! (<< "A promise cannot be completed more than once, value = ~{@value}, value not accepted = ~{v}"))))
-      (->future [_] future)
+  (run-reader
+    (m-do
+      [env (ask)]
+      [:return
+       (let [value (atom not-yet-completed)
+             callbacks (transient [])
+             future ((mk-future value callbacks) env)]
+         (reify
+           Promise
+           (complete [_ v]
+             (if (compare-and-set! value not-yet-completed v)
+               ((run-reader (execute-all (persistent! callbacks) v)) env)
+               (illegal-state! (<< "A promise cannot be completed more than once, value = ~{@value}, value not accepted = ~{v}"))))
+           (->future [_] future)
 
-      IDeref
-      (deref [_] "Actually a double deref, because value is a volatile." @value)
+           IDeref
+           (deref [_] "Actually a double deref, because value is a volatile." @value)
 
-      Object
-      (equals [this o] (equal? this o Promise #(= @value @o)))
-      (hashCode [_] (hash value))
-      (toString [_] (str "Promise " value)))))
+           Object
+           (equals [this o] (test-eq this o Promise #(= @value @o)))
+           (hashCode [_] (hash @value))
+           (toString [_] (str "Promise " @value))))])))
 
 (defn- mk-future [value callbacks]
-  (reify
-    Future
-    (await [this milliseconds]
-      (letfn
-        [(f []
-            {:pre [(> milliseconds 0)]}
-            (let [phaser (Phaser. 1)]
-              (on-complete this (fn [_] (.arriveAndDeregister phaser)))
-              (try (.awaitAdvanceInterruptibly
-                     phaser
-                     0 milliseconds TimeUnit/MILLISECONDS)
-                   @value
-                   (catch TimeoutException _
-                     (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
-                   (catch Throwable e
-                     (failure e)))))]
-        (f)))
-    (on-complete [_ f]
-      (let [v @value]
-        (if (= v not-yet-completed)
-          (conj! callbacks f)
-          (mock-execute f v))))
+  (run-reader
+    (m-do
+      [env (ask)]
+      [:return
+       (reify
+         Future
+         (await [this milliseconds]
+           (letfn
+             [(f []
+                 {:pre [(> milliseconds 0)]}
+                 (let [phaser (Phaser. 1)]
+                   (on-complete this (fn [_] (.arriveAndDeregister phaser)))
+                   (try (.awaitAdvanceInterruptibly
+                          phaser
+                          0 milliseconds TimeUnit/MILLISECONDS)
+                        @value
+                        (catch TimeoutException _
+                          (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
+                        (catch Throwable e
+                          (failure e)))))]
+             (f)))
+         (on-complete [_ f]
+           (let [v @value]
+             (if (= v not-yet-completed)
+               (conj! callbacks f)
+               ((run-reader (execute f v)) env))))
 
-    IDeref
-    (deref [_] "Actually a double deref, because value is a volatile." @value)
+         IDeref
+         (deref [_] "Actually a double deref, because value is a volatile." @value)
 
-    Object
-    (equals [this o] (equal? this o Future #(= @value @o)))
-    (hashCode [_] (hash value))
-    (toString [_] (str "Future " (deref value)))
+         Object
+         (equals [this o] (test-eq this o Future #(= @value @o)))
+         (hashCode [_] (hash @value))
+         (toString [_] (str "Future " @value))
 
-    Functor
-    (-fmap [this f]
-      (let [p (promise)]
-        (on-complete this (fn [a] (complete p (success? a f identity))))
-        (->future p)))
+         Functor
+         (-fmap [this f]
+           (let [p (promise)]
+             (on-complete this (fn [a] (complete p (success? a f identity))))
+             (->future p)))
 
-    Pure
-    (-pure [_ u] (immediate u))
+         Pure
+         (-pure [_ u] (immediate u))
 
-    ; Applicative
+         ; add?
+         ; Applicative
+         ; MonadPlus
 
-    Monad
-    (-bind [this f]
-      (let [p (promise)
-            succ (fn [a] (on-complete (failed-only (f @a)) (fn [b] (complete p b))))
-            fail (fn [a] (complete p a))]
-        (on-complete this (fn [a] (success? a succ fail)))
-        (->future p)))
+         Monad
+         (-bind [this f]
+           (let [p (promise)
+                 succ (fn [a] (on-complete (failed-only (f @a)) (fn [b] (complete p b))))
+                 fail (fn [a] (complete p a))]
+             (on-complete this (fn [a] (success? a succ fail)))
+             (->future p)))
 
-    ; MonadPlus
-    ))
+         )])))
 
 ;; fn
 
 (defn immediate [v]
-  (let [p (promise)]
-    (complete p (success v))
-    (->future p)))
+  (run-reader
+    (m-do [env (ask)]
+          [:return
+           (let [p ((promise) env)]
+             (complete p (success v))
+             (->future p))])))
 
 (defn failed [v]
-  (let [p (promise)]
-    (complete p (failure v))
-    (->future p)))
+  (m-do [env (ask)]
+        [:return
+         (let [p ((promise) env)]
+           (complete p (failure v))
+           (->future p))]))
 
 (defn- failed-only [f]
   {:post [(satisfies? Future %)]}
@@ -115,10 +132,11 @@
 
 ;; macro
 
-(defmacro future [& body]
-  `(let [p# (promise)]
-     (mock-execute (fn [] (complete p# (result ~@body))))
-     (->future p#)))
+(comment (defmacro future [& body]
+           `(let [p# (promise)]
+              (mock-execute (fn [] (complete p# (result ~@body))))
+              (->future p#)))
+         )
 
 ;; utility fn
 

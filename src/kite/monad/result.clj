@@ -23,7 +23,7 @@
         (deref [_] v)
 
         Object
-        (equals [this o] (equal? this o Success #(= v @o)))
+        (equals [this o] (test-eq this o Success #(= v @o)))
         (hashCode [_] (hash v))
         (toString [_] (str "Success " v))
 
@@ -55,7 +55,7 @@
     (deref [_] v)
 
     Object
-    (equals [this o] (equal? this o Failure #(= v @o)))
+    (equals [this o] (test-eq this o Failure #(= v @o)))
     (hashCode [_] (hash v))
     (toString [_] (str "Failure " v))
 

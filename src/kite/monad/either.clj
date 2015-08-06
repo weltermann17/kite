@@ -17,7 +17,7 @@
         (deref [_] v)
 
         Object
-        (equals [this o] (equal? this o Right #(= v @o)))
+        (equals [this o] (test-eq this o Right #(= v @o)))
         (hashCode [_] (hash v))
         (toString [_] (str "Right " v))
 
@@ -41,7 +41,7 @@
         (deref [_] v)
 
         Object
-        (equals [this o] (equal? this o Left #(= v @o)))
+        (equals [this o] (test-eq this o Left #(= v @o)))
         (hashCode [_] (hash v))
         (toString [_] (str "Left " v))
 

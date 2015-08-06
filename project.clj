@@ -6,7 +6,7 @@
                   ["expectations"]
                   ["check"]
                   ["jar"]]
-  :dependencies [[org.clojure/clojure "1.8.0-alpha3"]
+  :dependencies [[org.clojure/clojure "1.8.0-alpha4"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [org.clojure/core.incubator "0.1.3"]
                  ; [org.clojure/algo.monads "0.1.5"]

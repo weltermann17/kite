@@ -17,10 +17,18 @@
 
 (def ^:private ^:const default-mk-config-reduce-by 5)
 
+(defn- ^Boolean default-and-config-must-be-a-map [default config]
+  (and (instance? IPersistentMap default) (instance? IPersistentMap config)))
+
+(defn- ^Boolean every-value-in-config-must-be-a-reader [config]
+  (every? #(satisfies? Reader %) (vals config)))
+
 (defn mk-config
   ([default config] (mk-config default-mk-config-reduce-by default config))
   ([reduce-by default config]
-   {:pre  [(and (instance? IPersistentMap default) (instance? IPersistentMap config))]
+   {:pre  [(and
+             (default-and-config-must-be-a-map default config)
+             (every-value-in-config-must-be-a-reader config))]
     :post [(instance? IPersistentMap %)]}
    (let [all (merge default config)
          readers (select-keys all (for [[k v] all :when (satisfies? Reader v)] k))

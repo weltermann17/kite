@@ -44,9 +44,9 @@
   ; (with-progress-reporting (quick-bench (:executor ctx1)))
   ; (with-progress-reporting (quick-bench (:executor (mk-config (default-execution-configuration) config))))
   ; (with-progress-reporting (quick-bench ((run-reader (execute (fn [] 1))) ctx1)))
-  (with-progress-reporting (quick-bench ((run-reader (execute (fn [a] a) 3)) ctx2)))
-  (let [fs [(fn [a] a)]]
-    (with-progress-reporting (quick-bench ((run-reader (execute-all fs 3)) ctx2))))
+  ; (with-progress-reporting (quick-bench ((run-reader (execute (fn [a] a) 3)) ctx2)))
+  ; (let [fs [(fn [a] a)]]
+  ;  (with-progress-reporting (quick-bench ((run-reader (execute-all fs 3)) ctx2))))
   ; (with-progress-reporting (quick-bench (.execute ^ForkJoinPool forkj ^Runnable (fn [] 2))))
 
   )

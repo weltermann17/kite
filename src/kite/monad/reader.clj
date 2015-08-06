@@ -4,13 +4,13 @@
   (run-reader [env]))
 
 (defn- mk-reader [r]
-  "This is probably the most difficult one, for a Scala guy that is."
+  "This is probably the most difficult one, for a Scala guy that is. Ackn."
   (reify
     Reader
     (run-reader [_] r)
 
     Object
-    (equals [this o] (equal? this o Reader #(= r (run-reader o))))
+    (equals [this o] (test-eq this o Reader #(= r (run-reader o))))
     (hashCode [_] (hash r))
     (toString [_] (str "Reader " r))
 
