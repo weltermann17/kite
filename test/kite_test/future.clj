@@ -12,6 +12,7 @@
   (expect (partial satisfies? Failure) (await (->future ((promise) env)) 1))
   (expect (partial ifn?) (immediate 17))
   (expect (success 17) (await ((immediate 17) env) 1))
+  ;; wrong way, await must return a reader, pass env from outer to inner not the other way round
   )
 
 (let [ctx {}
