@@ -3,37 +3,33 @@
 (import
   (clojure.lang ExceptionInfo))
 
-(require
-  '[clojure.pprint :refer [pprint]])
-
-;; common helpers
-
-(def pretty-print pprint)
-
 ;; fatal handling
 
-(defn fatal? [^Throwable e]
+(defn fatal? [e]
   "A fatal exception should lead to the termination of the jvm."
-  (some #(instance? % e) [InterruptedException
+  (any? #(instance? % e) [InterruptedException
                           LinkageError
                           ThreadDeath
                           VirtualMachineError]))
 
 (defn fatal?!
-  ([^Throwable e]
+  ([e]
    "If e is fatal then it is rethrown else it is simply returned."
    (fatal?! e e))
-  ([^Throwable e v]
+  ([e v]
    "If e is fatal then it is rethrown else v is returned."
    (if (fatal? e) (throw e) v)))
 
-;; most common exceptions, for me that is
+;; most common exceptions, for my kind of code that is
 
 (defn illegal-state! [^String s & fs]
   (throw (IllegalStateException. (str s fs))))
 
 (defn illegal-argument! [^String s & fs]
   (throw (IllegalArgumentException. (str s fs))))
+
+(defn index-out-of-bounds! [^String s & fs]
+  (throw (IndexOutOfBoundsException. (str s fs))))
 
 (defn no-such-method! [^String s & fs]
   "Mainly used to signal 'not yet implemented' during development."
@@ -42,8 +38,7 @@
 ;; handle exceptional information
 
 (defn info!
-  "Throws an 'informational exception'.
-  This is used for control flow in exceptional cases."
+  "Throws an 'informational exception'.  This is used for control flow in exceptional cases."
   ([msg]
    (info! msg {}))
   ([msg data]

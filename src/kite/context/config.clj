@@ -6,34 +6,28 @@
 (require
   '[clojure.reflect :refer [typename]])
 
-(defn- reduce-readers [n readers initial]
+(defn- reduce-readers [n readers]
   (loop [i 1
-         c initial]
-    (if (> i n)
+         c readers]
+    (if (or (> i n) (not-any? #(satisfies? Reader %) (vals c)))
       c
       (recur (inc i)
              (into {} (for [[k v] readers]
                         [k (try-or-else ((run-reader v) c) v)]))))))
 
-(def ^:private ^:const default-mk-config-reduce-by 5)
+;; public fns
 
-(defn- ^Boolean default-and-config-must-be-a-map [default config]
-  (and (instance? IPersistentMap default) (instance? IPersistentMap config)))
-
-(defn- ^Boolean every-value-in-config-must-be-a-reader [config]
-  (every? #(satisfies? Reader %) (vals config)))
-
-(defn mk-config
-  ([default config] (mk-config default-mk-config-reduce-by default config))
+(defn merge-config
+  ([default config]
+   (merge-config 10 default config))
   ([reduce-by default config]
-   {:pre  [(and
-             (default-and-config-must-be-a-map default config)
-             (every-value-in-config-must-be-a-reader config))]
-    :post [(instance? IPersistentMap %)]}
+   {:pre  [(instance? IPersistentMap default)
+           (instance? IPersistentMap config)]
+    :post [(instance? IPersistentMap %)
+           (not-any? (fn [v] (satisfies? Reader v)) (vals %))]}
    (let [all (merge default config)
-         readers (select-keys all (for [[k v] all :when (satisfies? Reader v)] k))
-         reduced (reduce-readers reduce-by readers all)]
-     (merge all reduced))))
+         all-readers (into {} (for [[k v] all] [k (if (satisfies? Reader v) v (reader v))]))]
+     (reduce-readers reduce-by all-readers))))
 
 ;; error handling during configuration
 

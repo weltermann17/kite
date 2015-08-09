@@ -10,9 +10,15 @@
   (expect (partial satisfies? Promise) ((promise) env))
   (expect (partial satisfies? Future) (->future ((promise) env)))
   (expect (partial satisfies? Failure) (await (->future ((promise) env)) 1))
+  (expect (partial satisfies? Future) ((immediate 17) env))
   (expect (partial ifn?) (immediate 17))
-  (expect (success 17) (await ((immediate 17) env) 1))
-  ;; wrong way, await must return a reader, pass env from outer to inner not the other way round
+  (expect (success 17) (await ((immediate 17) env) 10))
+  (comment (expect (success 2)
+                   (await (m-do [x ((immediate 1) env)
+                                 ]
+                                ;y ((immediate (+ 2 0)) env)
+                                ;z ((immediate 3) env)]
+                                [:return (+ x 1)]) 10)))
   )
 
 (let [ctx {}

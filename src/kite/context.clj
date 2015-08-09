@@ -6,6 +6,7 @@
   '[kite.category :refer :all]
   '[kite.monad :refer :all])
 
+(load "context/access")
 (load "context/config")
 
 ;; eof

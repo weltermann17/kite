@@ -8,19 +8,21 @@
 (require
   '[criterium.core :refer [bench quick-bench with-progress-reporting]])
 
-(let [config
-      {
-       :executor-policy             (reader :threadpool)
-       :scheduler-minimum-size      (reader 16)
-       :forkjoin-parallelism-factor (reader 3.0)
-       :forkjoin-parallelism        (reader 12)
-       :threadpool-minimum-size     (reader 200)
-       :threadpool-maximum-size     (m-do [mn (asks :threadpool-minimum-size)] [:return (* mn 2)])
-       :threadpool-rejection-policy (reader (ThreadPoolExecutor$AbortPolicy.))
-       :forkjoin-error-reporter     (reader (fn [m e] (println "my-own-reporter" e "<-" m)))
-       }
+(let [config {
+              :executor-policy             :threadpool
+              :scheduler-minimum-size      16
+              :forkjoin-parallelism-factor 3.0
+              :forkjoin-parallelism        12
+              :threadpool-minimum-size     200
+              :a-false-value               false
+              :threadpool-maximum-size     (m-do [mn (asks :threadpool-minimum-size)]
+                                                 [:return (* mn 2)])
+              :threadpool-rejection-policy (ThreadPoolExecutor$AbortPolicy.)
+              :forkjoin-error-reporter     (fn [m e] (println "my-own-reporter" e "<-" m))
+              }
       ctx1 (add-executor-context {} config)
       ctx2 (add-executor-context {} {})
+      cfg1 (:config ctx1)
       ;e1 ((run-reader (execute (fn [] (Thread/sleep 10) (println "Hi thread!")))) ctx1)
       ;e2 ((run-reader (execute (fn [] (Thread/sleep 100) (println "Hi fork!")))) ctx2)
       e3 ((run-reader (execute (fn [a] (Thread/sleep 100) (println "Hi fork!" a)) 7)) ctx2)
@@ -37,6 +39,19 @@
       e8 ((run-reader (execute-all fns 4)) ctx2)
       forkj (:executor ctx2)
       ]
+  (expect 200 (:threadpool-minimum-size cfg1))
+  (expect 400 (:threadpool-maximum-size cfg1))
+  (expect 200 @(config-int :threadpool-minimum-size cfg1))
+  (expect 200 @(config-long :threadpool-minimum-size cfg1))
+  (expect 200.0 @(config-double :threadpool-minimum-size cfg1))
+  (expect 200 @(config-num :threadpool-minimum-size cfg1))
+  (expect (bigdec 200) @(config-bigdec :threadpool-minimum-size cfg1))
+  (expect "200" @(config-str :threadpool-minimum-size cfg1))
+  (expect (partial satisfies? Failure) (config-boolean :XYZ cfg1))
+  (expect (partial satisfies? Failure) (config-int :XYZ cfg1))
+  (expect IndexOutOfBoundsException @(config-int :XYZ cfg1))
+  (expect (success false) (config-boolean :a-false-value cfg1))
+
   ;(println e1 e2 e3)
   ; (Thread/sleep 500)
   ; (pretty-print ctx1)

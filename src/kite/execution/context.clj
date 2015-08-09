@@ -58,11 +58,12 @@
 ;; context
 
 (defn add-executor-context [context initial-config]
-  (let [c (mk-config (default-execution-configuration) initial-config)
+  (let [c (merge-config (default-execution-configuration) initial-config)
         ^ExecutorService e (apply (:executor c) [])
         ^ScheduledExecutorService s (apply (:scheduler-executor c) [])]
     (merge context
-           {:executor  e
+           {:config    c
+            :executor  e
             :scheduler s}
            (when (instance? ForkJoinPool e)
              {:recursive-action (:forkjoin-recursive-action c)

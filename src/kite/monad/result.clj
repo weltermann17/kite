@@ -8,41 +8,45 @@
 (defprotocol Failure
   (-failure [_]))
 
-(declare match-result failure)
+(declare failure success)
 
-(def success
-  (memoize
-    (fn [v]
-      {:pre [(fatal?! v)]}
-      (reify
-        Result
-        Success
-        (-success [_] v)
+(defmacro result [& body]
+  `(try
+     (success (do ~@body))
+     (catch Throwable e# (failure e#))))
 
-        IDeref
-        (deref [_] v)
+(defn success [v]
+  {:pre [(not (nil? v))
+         (not (fatal? v))]}
+  (reify
+    Result
+    Success
+    (-success [_] v)
 
-        Object
-        (equals [this o] (test-eq this o Success #(= v @o)))
-        (hashCode [_] (hash v))
-        (toString [_] (str "Success " v))
+    IDeref
+    (deref [_] v)
 
-        Functor
-        (-fmap [_ f] (success (f v)))
+    Object
+    (equals [this o] (test-eq this o Success #(= v @o)))
+    (hashCode [_] (hash v))
+    (toString [_] (str "Success " v))
 
-        Pure
-        (-pure [_ u] (success u))
+    Functor
+    (-fmap [_ f] (result (f v)))
 
-        ;Applicative :todo: how to implement?
-        ;(-ap [_ m] (match-result m (comp success v) (failure v)))
+    Pure
+    (-pure [_ u] (success u))
 
-        Monad
-        (-bind [_ f] (try (f v) (catch Throwable e (failure e))))
+    ;; Applicative
+    ;; (-ap [_ m] (match-result m (comp success v) (failure v)))
 
-        ; Todo: add MonadPlus
+    Monad
+    (-bind [_ f] (try (f v) (catch Throwable e (failure e))))
 
-        IMatchLookup
-        (val-at [_ k d] (if (= Success k) v d))))))
+    ;; MonadPlus
+
+    IMatchLookup
+    (val-at [_ k d] (if (= Success k) v d))))
 
 (defn failure [v]
   {:pre [(or (fatal?! v) (nil? v))]}
@@ -52,7 +56,9 @@
     (-failure [_] v)
 
     IDeref
-    (deref [_] v)
+    (deref [_]
+      "Throws v if it is a Throwable else returns it."
+      (if (instance? Throwable v) (throw v) v))
 
     Object
     (equals [this o] (test-eq this o Failure #(= v @o)))
@@ -76,10 +82,5 @@
   (matchm [r]
           [{Success _}] (succ r)
           [{Failure _}] (fail r)))
-
-(defmacro result [& body]
-  `(try
-     (success (do ~@body))
-     (catch Throwable e# (failure e#))))
 
 ;; eof

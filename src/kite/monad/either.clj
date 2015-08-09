@@ -6,53 +6,49 @@
 
 (defprotocol Right)
 
-(def right
-  (memoize
-    (fn [v]
-      (reify
-        Either
-        Right
+(defn right [v]
+  (reify
+    Either
+    Right
 
-        IDeref
-        (deref [_] v)
+    IDeref
+    (deref [_] v)
 
-        Object
-        (equals [this o] (test-eq this o Right #(= v @o)))
-        (hashCode [_] (hash v))
-        (toString [_] (str "Right " v))
+    Object
+    (equals [this o] (test-eq this o Right #(= v @o)))
+    (hashCode [_] (hash v))
+    (toString [_] (str "Right " v))
 
-        Pure
-        (-pure [_ u] (right u))
+    Pure
+    (-pure [_ u] (right u))
 
-        Monad
-        (-bind [_ f] (f v))
+    Monad
+    (-bind [_ f] (f v))
 
-        IMatchLookup
-        (val-at [_ k d] (if (= Right k) v d))))))
+    IMatchLookup
+    (val-at [_ k d] (if (= Right k) v d))))
 
-(def left
-  (memoize
-    (fn [v]
-      (reify
-        Either
-        Left
+(defn left [v]
+  (reify
+    Either
+    Left
 
-        IDeref
-        (deref [_] v)
+    IDeref
+    (deref [_] v)
 
-        Object
-        (equals [this o] (test-eq this o Left #(= v @o)))
-        (hashCode [_] (hash v))
-        (toString [_] (str "Left " v))
+    Object
+    (equals [this o] (test-eq this o Left #(= v @o)))
+    (hashCode [_] (hash v))
+    (toString [_] (str "Left " v))
 
-        Pure
-        (-pure [_ u] (right u))
+    Pure
+    (-pure [_ u] (right u))
 
-        Monad
-        (-bind [m _] m)
+    Monad
+    (-bind [m _] m)
 
-        IMatchLookup
-        (val-at [_ k d] (if (= Left k) v d))))))
+    IMatchLookup
+    (val-at [_ k d] (if (= Left k) v d))))
 
 (defn right? [e ri le]
   (matchm [e]

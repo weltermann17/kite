@@ -27,6 +27,6 @@
                            ::functor functor))
 
 (defn most-general [t inst]
-  (some (fn [[t p]] (when (satisfies? (deref p) inst) t)) (t hierarchy)))
+  (any? (fn [[t p]] (when (satisfies? (deref p) inst) t)) (t hierarchy)))
 
 ;; eof

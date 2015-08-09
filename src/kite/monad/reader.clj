@@ -3,37 +3,36 @@
 (defprotocol Reader
   (run-reader [env]))
 
-(defn- mk-reader [r]
+(defn- ->reader [r]
   "This is probably the most difficult one, for a Scala guy that is. Ackn."
   (reify
     Reader
     (run-reader [_] r)
 
-    Object
-    (equals [this o] (test-eq this o Reader #(= r (run-reader o))))
-    (hashCode [_] (hash r))
-    (toString [_] (str "Reader " r))
-
     Functor
     (-fmap [_ f] (f r))
 
     Pure
-    (-pure [_ u] (mk-reader (fn [_] u)))
+    (-pure [_ u] (->reader (fn [_] u)))
 
     Applicative
-    (-apply [m _] m)
+    (-apply [m _] (prn "suprise! applicative" m) m)
 
     Monad
-    (-bind [_ f] (mk-reader (fn [k] ((run-reader (f (r k))) k))))))
+    (-bind [_ f] (->reader (fn [k] ((run-reader (f (r k))) k))))))
 
-(defn ask [] (mk-reader (fn [r] (identity r))))
+;; fn
+
+(defn ask [] (->reader (fn [r] (identity r))))
 
 (defn asks [f]
-  (mk-reader (fn [r] (f r))))
+  (->reader (fn [r] (f r))))
 
-(defn local [f g] (mk-reader (fn [r] ((run-reader g) (f r)))))
+(defn local [f g] (->reader (fn [r] ((run-reader g) (f r)))))
 
-(defn reader [f]
-  (m-do [_ (ask)] [:return f]))
+;; macro
+
+(defmacro reader [body]
+  `(m-do [_# (ask)] [:return ~body]))
 
 ;; eof

@@ -8,7 +8,6 @@
 ;; protocols
 
 (defprotocol Future
-  "Future is a Monad."
   (^Result await [_ milliseconds]
     "Should be used for testing only. Milliseconds must be > 0.")
   (on-complete [_ f]
