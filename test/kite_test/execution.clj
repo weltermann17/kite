@@ -25,7 +25,7 @@
       cfg1 (:config ctx1)
       ;e1 ((run-reader (execute (fn [] (Thread/sleep 10) (println "Hi thread!")))) ctx1)
       ;e2 ((run-reader (execute (fn [] (Thread/sleep 100) (println "Hi fork!")))) ctx2)
-      e3 ((run-reader (execute (fn [a] (Thread/sleep 100) (println "Hi fork!" a)) 7)) ctx2)
+      e3 (run-reader (execute (fn [a] (Thread/sleep 100) (println "Hi fork!" a)) 7) ctx2)
       ;e4 ((fmap run-reader (execute-all [(fn [a] (println "Hi1!" a)) (fn [a] (println "Hi2!" a))] 3)))
       fs [(execute (fn [] (Thread/sleep 10) (println "Hi seq1!")))
           (execute (fn [] (Thread/sleep 50) (println "Hi seq2!")))]
@@ -33,10 +33,10 @@
            (fn [a] (Thread/sleep 50) (println "Hi seq22!" a))]
       ; e5 (fmap #((run-reader %) ctx1) fs)
       ;e6 (m-do [r (ask)] [:return (fmap #((run-reader %) r) fs)])
-      e6 (fn [fss v] (m-do [r (ask)] [:let fss (fmap #(execute % v) fns)] [:return (doseq [f fss] ((run-reader f) r))]))
-      e7 ((run-reader (e6 fns 3)) ctx1)
+      e6 (fn [fss v] (m-do [r (ask)] [:let fss (fmap #(execute % v) fns)] [:return (doseq [f fss] (run-reader f r))]))
+      e7 (run-reader (e6 fns 3) ctx1)
       _ (Thread/sleep 100)
-      e8 ((run-reader (execute-all fns 4)) ctx2)
+      e8 (run-reader (execute-all fns 4) ctx2)
       forkj (:executor ctx2)
       ]
   (expect 200 (:threadpool-minimum-size cfg1))

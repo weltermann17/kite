@@ -4,7 +4,7 @@
   '[clojure.core.match :refer [match]])
 
 (defmulti >>=+
-          (fn [m _] (most-general ::monad m)))
+  (fn [m _] (most-general ::monad m)))
 
 (defn >>=
   ([m] m)

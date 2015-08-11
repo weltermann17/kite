@@ -1,13 +1,15 @@
 (in-ns 'kite.category)
 
 (defmulti pure+
-          (fn [a _] (most-general ::applicative a)))
+  (fn [a _] (most-general ::applicative a)))
 
 (defn pure [m a]
-  (if (satisfies? Pure m) (-pure m a) (pure+ m a)))
+  (if (satisfies? Pure m)
+    (-pure m a)
+    (pure+ m a)))
 
 (defmulti <*>+
-          (fn [af & _] (most-general ::applicative af)))
+  (fn [af & _] (most-general ::applicative af)))
 
 (declare <*)
 
@@ -23,10 +25,12 @@
 (defn <*
   ([af] af)
   ([af a & r]
-   (if r (apply <* (<* af a) r)
-         (<*> (fmap (fn [f] #(partial f %)) af) a))))
+   (if r
+     (apply <* (<* af a) r)
+     (<*> (fmap (fn [f] #(partial f %)) af) a))))
 
 (defn sequence-a [[a & as]]
+  "Need more examples for this one."
   (apply <*> (pure a vector) a as))
 
 (defmethod fmap+ ::applicative [f v]

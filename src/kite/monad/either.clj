@@ -17,7 +17,7 @@
     Object
     (equals [this o] (test-eq this o Right #(= v @o)))
     (hashCode [_] (hash v))
-    (toString [_] (str "Right " v))
+    (toString [_] (<< "Right ~{v}"))
 
     Pure
     (-pure [_ u] (right u))
@@ -39,7 +39,7 @@
     Object
     (equals [this o] (test-eq this o Left #(= v @o)))
     (hashCode [_] (hash v))
-    (toString [_] (str "Left " v))
+    (toString [_] (str "Left ~{v}"))
 
     Pure
     (-pure [_ u] (right u))
@@ -56,7 +56,7 @@
           [{Left v}] (le v)))
 
 (defn mirror [e]
-  "Needed for arrows."
+  "Needed for arrows. Arrows?"
   (matchm [e]
           [{Left v}] (right v)
           [{Right v}] (left v)))

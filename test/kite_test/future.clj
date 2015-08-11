@@ -24,7 +24,7 @@
 (let [ctx {}
       config {}
       env (add-executor-context ctx config)
-      m (fn [] (run-reader (m-do [e (ask)] [:return (await ((immediate 17) e) 1)])))]
+      m (fn [] (partial run-reader (m-do [e (ask)] [:return (await ((immediate 17) e) 1)])))]
   (expect (success 17) ((m) env))
   )
 

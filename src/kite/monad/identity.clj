@@ -4,8 +4,8 @@
   "Why do we actually have this?"
   (reify
     Object
-    (toString [_] "IdentityMonad")
     (equals [this o] (identical? this o))
+    (toString [_] "Identity")
 
     Functor
     (-fmap [m _] m)

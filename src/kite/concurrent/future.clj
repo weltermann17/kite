@@ -26,7 +26,8 @@
 (def ^:private ^:const not-yet-completed ::not-yet-completed)
 
 (defn promise []
-  (run-reader
+  (partial
+    run-reader
     (m-do
       [env (ask)]
       [:return
@@ -37,7 +38,7 @@
            Promise
            (complete [_ v]
              (if (compare-and-set! value not-yet-completed v)
-               ((run-reader (execute-all (persistent! callbacks) v)) env)
+               (run-reader (execute-all (persistent! callbacks) v) env)
                (illegal-state! (<< "A promise cannot be completed more than once, value = ~{@value}, value not accepted = ~{v}"))))
            (->future [_] future)
 
@@ -50,7 +51,8 @@
            (toString [_] (str "Promise " @value))))])))
 
 (defn- mk-future [value callbacks]
-  (run-reader
+  (partial
+    run-reader
     (m-do
       [env (ask)]
       [:return
@@ -75,7 +77,7 @@
            (let [v @value]
              (if (= v not-yet-completed)
                (conj! callbacks f)
-               ((run-reader (execute f v)) env))))
+               (run-reader (execute f v) env))))
 
          IDeref
          (deref [_] "Actually a double deref, because value is a volatile." @value)
@@ -111,12 +113,12 @@
 ;; fn
 
 (defn immediate [v]
-  (run-reader
-    (m-do [env (ask)]
-          [:return
-           (let [p ((promise) env)]
-             (complete p (success v))
-             (->future p))])))
+  (partial run-reader
+           (m-do [env (ask)]
+                 [:return
+                  (let [p ((promise) env)]
+                    (complete p (success v))
+                    (->future p))])))
 
 (defn failed [v]
   (m-do [env (ask)]
@@ -131,11 +133,12 @@
 
 ;; macro
 
-(comment (defmacro future [& body]
-           `(let [p# (promise)]
-              (mock-execute (fn [] (complete p# (result ~@body))))
-              (->future p#)))
-         )
+(comment
+  (defmacro future [& body]
+    `(let [p# (promise)]
+       (mock-execute (fn [] (complete p# (result ~@body))))
+       (->future p#)))
+  )
 
 ;; utility fn
 

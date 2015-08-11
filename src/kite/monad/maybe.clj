@@ -1,14 +1,10 @@
 (in-ns 'kite.monad)
 
-(declare maybe nothing)
-
 (defprotocol Maybe)
-
+(defprotocol Just)
 (defprotocol Nothing)
 
-(defprotocol Just)
-
-(declare just?)
+(declare just? nothing)
 
 (defn just [v]
   {:pre [(not (nil? v))]}
@@ -22,7 +18,7 @@
     Object
     (equals [this o] (test-eq this o Just #(= v @o)))
     (hashCode [_] (hash v))
-    (toString [_] (str "Just " v))
+    (toString [_] (<< "Just ~{v}"))
 
     Functor
     (-fmap [_ f] (just (f v)))
@@ -31,7 +27,7 @@
     (-pure [_ u] (just u))
 
     Applicative
-    (-apply [_ mv] (just? mv (comp just v) nothing))
+    (-apply [_ m] (just? m (comp just v) nothing))
 
     Monad
     (-bind [_ f] (f v))
@@ -45,8 +41,8 @@
     Nothing
 
     Object
-    (toString [_] "Nothing")
     (equals [this o] (identical? this o))
+    (toString [_] "Nothing")
 
     IFn
     (invoke [this]

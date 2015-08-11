@@ -1,34 +1,32 @@
 (in-ns 'kite.monad)
 
 (defprotocol Reader
-  (run-reader [env]))
+  (run-reader [f e]))
 
-(defn- ->reader [r]
-  "This is probably the most difficult one, for a Scala guy that is. Ackn."
+(defn- mk-reader [f]
   (reify
     Reader
-    (run-reader [_] r)
+    (run-reader [_ e] (f e))
 
     Functor
-    (-fmap [_ f] (f r))
+    (-fmap [_ k] (k f))
 
     Pure
-    (-pure [_ u] (->reader (fn [_] u)))
-
-    Applicative
-    (-apply [m _] (prn "suprise! applicative" m) m)
+    (-pure [_ k] (mk-reader (constantly k)))
 
     Monad
-    (-bind [_ f] (->reader (fn [k] ((run-reader (f (r k))) k))))))
+    (-bind [_ k] (mk-reader (fn [g] (run-reader (k (f g)) g))))))
 
 ;; fn
 
-(defn ask [] (->reader (fn [r] (identity r))))
+(defn ask []
+  (mk-reader (fn [e] (identity e))))
 
 (defn asks [f]
-  (->reader (fn [r] (f r))))
+  (mk-reader (fn [e] (f e))))
 
-(defn local [f g] (->reader (fn [r] ((run-reader g) (f r)))))
+(defn local [f g]
+  (mk-reader (fn [e] (run-reader g (f e)))))
 
 ;; macro
 

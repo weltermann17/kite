@@ -36,6 +36,6 @@
   "This was a difficult one."
   (m-do [env (ask)]
         [:let fs' (map #(execute % v) fs)]                  ; fmap 20x slower
-        [:return (doseq [f fs'] ((run-reader f) env))]))    ; only want the side-effects of all fs
+        [:return (doseq [f fs'] (run-reader f env))]))      ; only want the side-effects of all fs
 
 ;; eof

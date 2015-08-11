@@ -13,7 +13,7 @@
       c
       (recur (inc i)
              (into {} (for [[k v] readers]
-                        [k (try-or-else ((run-reader v) c) v)]))))))
+                        [k (try-or-else (run-reader v c) v)]))))))
 
 ;; public fns
 

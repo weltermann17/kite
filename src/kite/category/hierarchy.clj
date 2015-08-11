@@ -19,14 +19,16 @@
 (def applicative (cons [::applicative #'Applicative] monad))
 (def functor (cons [::functor #'Functor] applicative))
 
-(def ^:private hierarchy (hash-map
+(def ^:private hierarchy (array-map
                            ::monoidsum monoidsum
                            ::monoid monoid
                            ::monad monad
                            ::applicative applicative
                            ::functor functor))
 
-(defn most-general [t inst]
-  (any? (fn [[t p]] (when (satisfies? (deref p) inst) t)) (t hierarchy)))
+(defn most-general [tp inst]
+  (any?
+    (fn [[t p]] (when (satisfies? (deref p) inst) t))
+    (tp hierarchy)))
 
 ;; eof

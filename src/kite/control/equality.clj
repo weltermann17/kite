@@ -8,6 +8,4 @@
       (satisfies? p b)
       (v))))
 
-(defn p [^Object a] (if a (.toString a) a))
-
 ;; eof
