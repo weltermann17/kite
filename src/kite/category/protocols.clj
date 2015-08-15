@@ -23,4 +23,9 @@
 (defprotocol MonoidSum
   (-sum [a as]))
 
+(defprotocol MonadTransformer
+  (-inner [m])
+  (-lift [m comp]))
+
+
 ;; eof

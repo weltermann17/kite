@@ -17,7 +17,7 @@
 (defn- ^Integer number-of-cores []
   (.availableProcessors (Runtime/getRuntime)))
 
-;; the main thing, execute implementation
+;; the main thing, execute* implementation
 
 (defn execute
   ([f v]
@@ -33,7 +33,7 @@
             (.execute e f))])))
 
 (defn execute-all [fs v]
-  "This was a difficult one."
+  "This is still a difficult one."
   (m-do [env (ask)]
         [:let fs' (map #(execute % v) fs)]                  ; fmap 20x slower
         [:return (doseq [f fs'] (run-reader f env))]))      ; only want the side-effects of all fs

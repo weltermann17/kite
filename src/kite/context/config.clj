@@ -9,7 +9,7 @@
 (defn- reduce-readers [n readers]
   (loop [i 1
          c readers]
-    (if (or (> i n) (not-any? #(satisfies? Reader %) (vals c)))
+    (if (or (> i n) (not-any? #(reader? %) (vals c)))
       c
       (recur (inc i)
              (into {} (for [[k v] readers]
@@ -24,9 +24,9 @@
    {:pre  [(instance? IPersistentMap default)
            (instance? IPersistentMap config)]
     :post [(instance? IPersistentMap %)
-           (not-any? (fn [v] (satisfies? Reader v)) (vals %))]}
+           (not-any? (fn [v] (reader? v)) (vals %))]}
    (let [all (merge default config)
-         all-readers (into {} (for [[k v] all] [k (if (satisfies? Reader v) v (reader v))]))]
+         all-readers (into {} (for [[k v] all] [k (if (reader? v) v (reader v))]))]
      (reduce-readers reduce-by all-readers))))
 
 ;; error handling during configuration
@@ -38,7 +38,7 @@
   ([e msg data]
    (invalid-config! e msg data nil))
   ([e msg data cause]
-   (when-not (satisfies? Reader e)
+   (when-not (reader? e)
      (comment msg)
      (info! (<< "Invalid configuration: ~{msg} (value: ~{e})") data cause)))
   )

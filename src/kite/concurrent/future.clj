@@ -9,15 +9,15 @@
 
 (defprotocol Future
   (^Result await [_ milliseconds]
-    "Should be used for testing only. Milliseconds must be > 0.")
+    "Should be used for testing only. 'Monadic use' should be preferred. Timeout in milliseconds must be > 0.")
   (on-complete [_ f]
-    "Adds callbacks executed on completion or calls them immediately if already completed."))
+    "Adds callbacks executed on completion or calls them directly if already completed."))
 
 (defprotocol Promise
   (complete [_ v]
     "Throws illegal-state! if called more than once.")
   (^Future ->future [_]
-    "Return its corresponding future."))
+    "Returns its corresponding future."))
 
 ;; types
 

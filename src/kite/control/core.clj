@@ -1,7 +1,8 @@
 (in-ns 'kite.control)
 
 (require
-  '[clojure.pprint :refer [pprint]])
+  '[clojure.pprint :refer [pprint]]
+  '[clojure.string :refer [lower-case]])
 
 ;; common helpers
 
