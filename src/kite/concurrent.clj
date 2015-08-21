@@ -8,6 +8,7 @@
   '[kite.monad :refer :all]
   '[kite.execution :refer :all])
 
+(load "concurrent/promise")
 (load "concurrent/future")
 
 ;; eof

@@ -5,9 +5,7 @@
 (defn config-value [k f config]
   "Will return 'Success value' if k exists and value can be converted by f else 'Failure reason'."
   (fmap f (result (let [v (k config)]
-                    (if-not (nil? v)
-                      v
-                      (index-out-of-bounds! k))))))
+                    (if-not (nil? v) v (index-out-of-bounds! k))))))
 
 (defn config-boolean [k config]
   (config-value k boolean config))

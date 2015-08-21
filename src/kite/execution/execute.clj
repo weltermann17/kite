@@ -23,19 +23,20 @@
   ([f v]
    (execute (fn [] (f v))))
   ([f]
-   (m-do [^ExecutorService e (asks :executor)
-          action (asks :recursive-action)]
-         [:return
-          (if (instance? ForkJoinPool e)
-            (if (ForkJoinTask/inForkJoinPool)
-              (.fork ^RecursiveAction (action f))
-              (.execute ^ForkJoinPool e ^Runnable f))
-            (.execute e f))])))
+   (let [^ExecutorService e (from-context :executor)
+         action (from-context :recursive-action)]
+     (println "context" (from-context :config))
+     (println "executor" e)
+     (if (instance? ForkJoinPool e)
+       (if (ForkJoinTask/inForkJoinPool)
+         (.fork ^RecursiveAction (action f))
+         (.execute ^ForkJoinPool e ^Runnable f))
+       (.execute e f)))))
 
 (defn execute-all [fs v]
-  "This is still a difficult one."
+  "This is still a difficult one. Also a ReaderMonad."
   (m-do [env (ask)]
         [:let fs' (map #(execute % v) fs)]                  ; fmap 20x slower
-        [:return (doseq [f fs'] (run-reader f env))]))      ; only want the side-effects of all fs
+        [:return (do (println "execute-all" fs v) (doseq [f fs'] (run-reader f env)))])) ; only want the side-effects of all fs
 
 ;; eof

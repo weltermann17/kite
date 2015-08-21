@@ -7,7 +7,7 @@
   '[kite.category :refer :all]
   '[kite.monad :refer :all])
 
-(load "execution/executor")
+(load "execution/execute")
 (load "execution/scheduler")
 (load "execution/singlethread")
 (load "execution/threadpool")

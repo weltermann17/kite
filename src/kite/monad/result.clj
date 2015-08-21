@@ -78,7 +78,8 @@
     (val-at [_ k d] (if (= Failure k) v d))))
 
 (defn success? [r succ fail]
-  "If 'r' is success apply 'succ' to it else apply 'fail'."
+  "A lot like an 'if': if 'r' is a Success apply 'succ' to it else apply 'fail' to it.
+   Note: succ/fail expect a Result, not the dereferenced value."
   (matchm [r]
           [{Success _}] (succ r)
           [{Failure _}] (fail r)))

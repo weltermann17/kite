@@ -1,32 +1,49 @@
 (in-ns 'kite-test)
 
-(import
-  (java.util.concurrent TimeoutException))
+(comment
+  (import
+    (java.util.concurrent TimeoutException)))
 
 (let [ctx {}
       config {}
       env (add-executor-context ctx config)]
-  (expect (partial ifn?) (promise))
-  (expect (partial satisfies? Promise) ((promise) env))
-  (expect (partial satisfies? Future) (->future ((promise) env)))
-  (expect (partial satisfies? Failure) (await (->future ((promise) env)) 1))
-  (expect (partial satisfies? Future) ((immediate 17) env))
-  (expect (partial ifn?) (immediate 17))
-  (expect (success 17) (await ((immediate 17) env) 10))
-  (comment (expect (success 2)
-                   (await (m-do [x ((immediate 1) env)
-                                 ]
-                                ;y ((immediate (+ 2 0)) env)
-                                ;z ((immediate 3) env)]
-                                [:return (+ x 1)]) 10)))
+  (expect (partial satisfies? Promise) (promise))
+  (expect (partial satisfies? Reader) (promise))
+  (expect (partial satisfies? Reader) (complete (promise) 7))
+  ;(expect nil (run-reader (complete (complete (promise) 7) 8) env)
   )
 
-(let [ctx {}
-      config {}
-      env (add-executor-context ctx config)
-      m (fn [] (partial run-reader (m-do [e (ask)] [:return (await ((immediate 17) e) 1)])))]
-  (expect (success 17) ((m) env))
-  )
+(comment (let [p (promise)
+               f (->future p)
+               c (m-do [env (ask)]
+                       [:let _ (run-reader (on-complete f (fn [a] (println "on-complete" a))) env)]
+                       [:return (run-reader (complete p 7) env)])]
+           (expect nil (run-reader c env)))
+         (expect (partial satisfies? Future) (immediate 17))
+         (expect (success 17) (run-reader (m-do [x (immediate 10)
+                                                 y (immediate 7)]
+                                                [:return (+ x y)]) env)))
+
+
+(comment (expect (partial satisfies? Future) (->future ((promise) env)))
+         (expect (partial satisfies? Failure) (await (->future ((promise) env)) 1))
+         (expect (partial satisfies? Future) ((immediate 17) env))
+         (expect (partial ifn?) (immediate 17))
+         (expect (success 17) (await ((immediate 17) env) 10))
+         (comment (expect (success 2)
+                          (await (m-do [x ((immediate 1) env)
+                                        ]
+                                       ;y ((immediate (+ 2 0)) env)
+                                       ;z ((immediate 3) env)]
+                                       [:return (+ x 1)]) 10)))
+
+
+         (let [ctx {}
+               config {}
+               env (add-executor-context ctx config)
+               m (fn [] (partial run-reader (m-do [e (ask)] [:return (await ((immediate 17) e) 1)])))]
+           (expect (success 17) ((m) env))
+           ))
 
 (comment
   (expect (success 2) (await (future (+ 1 1)) 100))
