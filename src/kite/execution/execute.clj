@@ -14,10 +14,10 @@
     (.setDaemon true)
     (.setUncaughtExceptionHandler uncaught)))
 
-(defn- ^Integer number-of-cores []
+(defn- ^Long number-of-cores []
   (.availableProcessors (Runtime/getRuntime)))
 
-;; the main thing, execute implementations
+;; the main thing: execute implementations
 
 (defn execute
   ([f v]
@@ -34,6 +34,7 @@
        (.execute ^ExecutorService executor inner-f)))))
 
 (defn execute-blocking
+  "Use this when f is likely to call blocking code."
   ([f v]
    (execute (fn [] (f v))))
   ([f]
@@ -50,9 +51,8 @@
          (.execute ^ExecutorService executor inner-f))))))
 
 (defn execute-all [fs v]
-  "This is still a difficult one. Also a ReaderMonad."      ;; todo: unmake a ReaderMonad
-  (m-do [env (ask)]
-        [:let fs' (map #(execute % v) fs)]                  ; fmap 20x slower
-        [:return (do (println "execute-all" fs v) (doseq [f fs'] (run-reader f env)))])) ; only want the side-effects of all fs
+  (doseq [f fs] (execute f v)))
+
+(comment execute-blocking)
 
 ;; eof

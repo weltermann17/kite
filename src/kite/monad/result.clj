@@ -77,11 +77,21 @@
     IMatchLookup
     (val-at [_ k d] (if (= Failure k) v d))))
 
-(defn success? [r succ fail]
-  "A lot like an 'if': if 'r' is a Success apply 'succ' to it else apply 'fail' to it.
-   Note: succ/fail expect a Result, not the dereferenced value."
-  (matchm [r]
-          [{Success _}] (succ r)
-          [{Failure _}] (fail r)))
+(defn success?
+  ([r succ fail]
+   "A lot like an 'if': if 'r' is a Success apply 'succ' to it else apply 'fail' to it.
+    Note: succ/fail must expect the Result, not the dereferenced internal value."
+   (matchm [r]
+           [{Success _}] (succ r)
+           [{Failure _}] (fail r)))
+  ([r]
+   "Just testing for instance of Success."
+   (satisfies? Success r)))
+
+(defn failure?
+  ([r fail succ]
+   (success? r succ fail))
+  ([r]
+   (satisfies? Failure r)))
 
 ;; eof

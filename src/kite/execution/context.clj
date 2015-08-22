@@ -59,8 +59,8 @@
 
 (defn add-executor-context [context initial-config]
   (let [c (merge-config (default-execution-configuration) initial-config)
-        ^ExecutorService e (apply (:executor c) [])
-        ^ScheduledExecutorService s (apply (:scheduler-executor c) [])]
+        ^ExecutorService e ((:executor c))
+        ^ScheduledExecutorService s ((:scheduler-executor c))]
     (merge context
            {:config    c
             :executor  e

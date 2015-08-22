@@ -30,7 +30,8 @@
     (reify
       Promise
       (complete [this v]
-        (when-not (compare-and-set! value not-yet-completed v)
+        (if (compare-and-set! value not-yet-completed v)
+          (execute-all (persistent! callbacks) v)
           (illegal-state! (<< "A promise cannot be completed more than once, value already set = ~{@value}, value not accepted = ~{v}")))
         this)
       (->future [_] future)
@@ -41,10 +42,6 @@
       Object
       (equals [this o] (test-eq this o Promise #(= @value @o)))
       (hashCode [_] (hash @value))
-      (toString [_] (<< "Promise ~{@value}"))
-
-      Reader
-      (run-reader [_ env]
-        (run-reader (execute-all (persistent! callbacks) @value) env)))))
+      (toString [_] (<< "Promise ~{@value}")))))
 
 ;; eof

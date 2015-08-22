@@ -27,13 +27,10 @@
                      (failure e)))))]
         (f)))
     (on-complete [_ f]
-      "'on-complete is a ReaderMonad."
-      (m-do [env (ask)]
-            [:return
-             (let [v @value]
-               (if (= v not-yet-completed)
-                 (conj! callbacks f)
-                 (run-reader (execute f v) env)))]))
+      (let [v @value]
+        (if (= v not-yet-completed)
+          (conj! callbacks f)
+          (execute f v))))
 
     IDeref
     (deref [_] "Actually a double deref, because value is a volatile." @value)
@@ -58,10 +55,7 @@
             succ (fn [a] (on-complete (failed-only (f @a)) (fn [b] (complete p b))))
             fail (fn [a] (complete p a))]
         (on-complete this (fn [a] (success? a succ fail)))
-        (->future p)))
-
-    Reader
-    (run-reader [this _] (println "run-reader" this))))
+        (->future p)))))
 
 ;; fn
 
@@ -70,44 +64,45 @@
     (complete p (success v))
     (->future p)))
 
-(comment
-  (defn failed [v]
-    (m-do [env (ask)]
-          [:return
-           (let [p ((promise) env)]
-             (complete p (failure v))
-             (->future p))]))
+(defn failed [v]
+  (let [p (promise)]
+    (complete p (failure v))
+    (->future p)))
 
-  (defn- failed-only [f]
-    {:post [(satisfies? Future %)]}
-    (try f (catch Throwable e (failed e))))
+(defn- failed-only [f]
+  {:post [(satisfies? Future %)]}
+  (try f (catch Throwable e (failed e))))
 
-  ;; macro
+;; macro
 
-  (defmacro future [& body]
-    `(let [p# (promise)]
-       (mock-execute (fn [] (complete p# (result ~@body))))
-       (->future p#)))
+(defmacro future [& body]
+  `(let [p# (promise)]
+     (execute (fn [] (complete p# (result ~@body))))
+     (->future p#)))
 
-  ;; utility fn
+(defmacro blocking-future [& body]
+  `(let [p# (promise)]
+     (execute-blocking (fn [] (complete p# (result ~@body))))
+     (->future p#)))
 
-  (defn first-result [& fs]
-    "Returns the first success or the first failure and discards the rest."
-    (let [p (promise)]
-      (doseq [f fs]
-        (on-complete f (fn [v] (try (complete p v) (catch IllegalStateException _)))))
-      (->future p)))
+;; utility fn
 
-  (defn first-success [& fs]
-    "Returns the first success or if all fail the last failure."
-    (let [p (promise)
-          c (volatile! (count fs))
-          succ (fn [a] (try (complete p a) (catch IllegalStateException _)))
-          fail (fn [a] (when (= 0 (vswap! c dec)) (complete p a)))]
-      (doseq [f fs] (on-complete f (fn [a] (success? a succ fail))))
-      (->future p)))
-  )
+(defn first-result [& fs]
+  "Returns the first success or the first failure and discards the rest."
+  (let [p (promise)]
+    (doseq [f fs]
+      (on-complete f (fn [v] (try (complete p v) (catch IllegalStateException _)))))
+    (->future p)))
 
-(comment mk-future)
+(defn first-success [& fs]
+  "Returns the first success or if all fail the last failure."
+  (let [p (promise)
+        c (volatile! (count fs))
+        succ (fn [a] (try (complete p a) (catch IllegalStateException _)))
+        fail (fn [a] (when (= 0 (vswap! c dec)) (complete p a)))]
+    (doseq [f fs] (on-complete f (fn [a] (success? a succ fail))))
+    (->future p)))
+
+(comment mk-future blocking-future)
 
 ;; eof
