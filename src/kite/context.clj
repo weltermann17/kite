@@ -7,7 +7,7 @@
   '[kite.monad :refer :all])
 
 (load "context/implicit")
-(load "context/access")
+(load "context/helper")
 (load "context/config")
 
 ;; eof

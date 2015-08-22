@@ -51,8 +51,20 @@
   (expect (partial satisfies? Failure) (config-int :XYZ cfg1))
   (expect IndexOutOfBoundsException @(config-int :XYZ cfg1))
   (expect (success false) (config-boolean :a-false-value cfg1))
-  (expect nil (with-context ctx1 (execute (fn [] (println "fn" 7)))))
-  (expect nil (with-context ctx2 (execute (fn [] (println "fn" 8)))))
+  (expect nil? (with-context ctx1 (execute (fn [] (println "fn" 7 (Thread/currentThread))))))
+  (expect nil? (dorun
+                 (for [i (range 1000)]
+                   (with-context (merge ctx2 {:i i})
+                     (execute (fn []
+                                (let [j (from-context :i)]
+                                  (if (not= i j)
+                                    (println "not" i j)
+                                    (when (= 0 (mod i 17))
+                                      ;
+                                      (println i j))))))))))
+  (expect nil? (Thread/sleep 2000))
+  (expect nil? (println (:executor ctx2)))
+
   ;(expect (partial reader?) (execute-all [(fn [] nil) (fn [] nil)] nil))
 
   ;(println e1 e2 e3)

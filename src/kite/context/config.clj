@@ -1,15 +1,12 @@
 (in-ns 'kite.context)
 
-(import
-  (clojure.lang IPersistentMap))
-
 (require
   '[clojure.reflect :refer [typename]])
 
-(defn- reduce-readers [n readers]
+(defn- reduce-readers [depth-max readers]
   (loop [i 1
          c readers]
-    (if (or (> i n) (not-any? #(reader? %) (vals c)))
+    (if (or (> i depth-max) (not-any? #(reader? %) (vals c)))
       c
       (recur (inc i)
              (into {} (for [[k v] readers]
@@ -18,16 +15,16 @@
 ;; public fns
 
 (defn merge-config
-  ([default config]
-   (merge-config 10 default config))
-  ([reduce-by default config]
-   {:pre  [(instance? IPersistentMap default)
-           (instance? IPersistentMap config)]
-    :post [(instance? IPersistentMap %)
+  ([existing-config new-config]
+   (merge-config 10 existing-config new-config))
+  ([reduce-by-max existing-config new-config]
+   {:pre  [(map? existing-config)
+           (map? new-config)]
+    :post [(map? %)
            (not-any? (fn [v] (reader? v)) (vals %))]}
-   (let [all (merge default config)
+   (let [all (merge existing-config new-config)
          all-readers (into {} (for [[k v] all] [k (if (reader? v) v (reader v))]))]
-     (reduce-readers reduce-by all-readers))))
+     (reduce-readers reduce-by-max all-readers))))
 
 ;; error handling during configuration
 

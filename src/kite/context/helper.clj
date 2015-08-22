@@ -1,11 +1,13 @@
 (in-ns 'kite.context)
 
-;; utility fns
+;; helper fns
 
 (defn config-value [k f config]
   "Will return 'Success value' if k exists and value can be converted by f else 'Failure reason'."
   (fmap f (result (let [v (k config)]
                     (if-not (nil? v) v (index-out-of-bounds! k))))))
+
+;; 'typed' access
 
 (defn config-boolean [k config]
   (config-value k boolean config))
