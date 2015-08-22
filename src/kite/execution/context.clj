@@ -27,7 +27,7 @@
    :executor-policy                            (default-executor-policy)
    :forkjoin-error-reporter                    (default-forkjoin-error-reporter)
    :forkjoin-uncaught-exception-handler        (default-forkjoin-uncaught-exception-handler)
-   :forkjoin-parallelism-factor                (default-forkjoin-parallelism-factor)
+   :forkjoin-parallelism-ratio                 (default-forkjoin-parallelism-ratio)
    :forkjoin-parallelism                       (default-forkjoin-parallelism)
    :forkjoin-thread-factory                    (default-forkjoin-thread-factory)
    :forkjoin-async-mode                        (default-forkjoin-async-mode)

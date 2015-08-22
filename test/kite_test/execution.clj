@@ -11,7 +11,7 @@
 (let [config {
               :executor-policy             :threadpool
               :scheduler-minimum-size      16
-              :forkjoin-parallelism-factor 3.0
+              :forkjoin-parallelism-ratio  3.0
               :forkjoin-parallelism        12
               :threadpool-minimum-size     200
               :a-false-value               false
@@ -21,7 +21,7 @@
               :forkjoin-error-reporter     (fn [m e] (println "my-own-reporter" e "<-" m))
               }
       ctx1 (add-executor-context {} config)
-      ctx2 (add-executor-context {} {})
+      ctx2 (add-executor-context {} {:forkjoin-parallelism 64})
       cfg1 (:config ctx1)
       ;e1 (run-reader (execute (fn [] (Thread/sleep 10) (println "Hi thread!"))) ctx1)
       ;e2 (run-reader (execute (fn [] (Thread/sleep 100) (println "Hi fork!"))) ctx2)
@@ -51,19 +51,21 @@
   (expect (partial satisfies? Failure) (config-int :XYZ cfg1))
   (expect IndexOutOfBoundsException @(config-int :XYZ cfg1))
   (expect (success false) (config-boolean :a-false-value cfg1))
-  (expect nil? (with-context ctx1 (execute (fn [] (println "fn" 7 (Thread/currentThread))))))
-  (expect nil? (dorun
-                 (for [i (range 1000)]
-                   (with-context (merge ctx2 {:i i})
-                     (execute (fn []
-                                (let [j (from-context :i)]
-                                  (if (not= i j)
-                                    (println "not" i j)
-                                    (when (= 0 (mod i 17))
-                                      ;
-                                      (println i j))))))))))
-  (expect nil? (Thread/sleep 2000))
-  (expect nil? (println (:executor ctx2)))
+  (expect nil (with-context ctx1 (execute (fn [] (println "fn" 7 (Thread/currentThread))))))
+  (expect nil
+    (dorun
+      (for [i (range 1000)]
+        (with-context (merge ctx2 {:i i})
+          (execute (fn []
+                     (let [j (from-context :i)]
+                       (if (not= i j)
+                         (println "not" i j)
+                         (when (= 0 (mod i 17))
+                           (dorun (for [x (range 1000) y (range 1 100)] (/ x y)))
+                           (Thread/sleep 500)
+                           (println i j))))))))))
+  (expect nil (Thread/sleep 2000))
+  (expect nil (println (:executor ctx2)))
 
   ;(expect (partial reader?) (execute-all [(fn [] nil) (fn [] nil)] nil))
 

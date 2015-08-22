@@ -59,9 +59,9 @@
 
 ;; helpers
 
-(defmacro try-or-else [body default]
+(defmacro try-or-else [body value]
   "Returns the result of 'body' or in case of a non-fatal and non-informational
-  exception 'default'. Exceptions that are either fatal or informational are rethrown."
-  `(try ~body (catch Throwable e# ((comp fatal?! info?!) e# ~default))))
+  exception 'value'. Exceptions that are either fatal or informational are rethrown."
+  `(try ~body (catch Throwable e# ((comp fatal?! info?!) e# ~value))))
 
 ;; eof

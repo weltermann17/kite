@@ -3,10 +3,11 @@
 (require
   '[clojure.reflect :refer [typename]])
 
-(defn- reduce-readers [depth-max readers]
+(defn- reduce-readers [depth-min depth-max readers]
+  "This is not perfect, it still needs min/max recur depth."
   (loop [i 1
          c readers]
-    (if (or (> i depth-max) (not-any? #(reader? %) (vals c)))
+    (if (and (> i depth-min) (or (> i depth-max) (not-any? #(reader? %) (vals c))))
       c
       (recur (inc i)
              (into {} (for [[k v] readers]
@@ -16,15 +17,15 @@
 
 (defn merge-config
   ([existing-config new-config]
-   (merge-config 10 existing-config new-config))
-  ([reduce-by-max existing-config new-config]
+   (merge-config 5 10 existing-config new-config))
+  ([reduce-by-min reduce-by-max existing-config new-config]
    {:pre  [(map? existing-config)
            (map? new-config)]
     :post [(map? %)
            (not-any? (fn [v] (reader? v)) (vals %))]}
    (let [all (merge existing-config new-config)
          all-readers (into {} (for [[k v] all] [k (if (reader? v) v (reader v))]))]
-     (reduce-readers reduce-by-max all-readers))))
+     (reduce-readers reduce-by-min reduce-by-max all-readers))))
 
 ;; error handling during configuration
 

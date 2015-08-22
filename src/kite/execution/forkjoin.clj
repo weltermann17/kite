@@ -11,24 +11,25 @@
 ;; forkjoin
 
 (defn- default-forkjoin-error-reporter []
-  (reader (fn [msg e] (println "forkjoin:" msg ":" e))))
+  (reader (fn [msg e] (println "forkjoin-error-reporter:" msg ":" e))))
 
 (defn- default-forkjoin-uncaught-exception-handler []
   (m-do [reporter (asks :forkjoin-error-reporter)]
         [:return (reify Thread$UncaughtExceptionHandler
                    (uncaughtException [_ t e] (reporter t e)))]))
 
-(defn- default-forkjoin-parallelism-factor []
+(defn- default-forkjoin-parallelism-ratio []
   (reader 2.0))
 
 (defn- default-forkjoin-parallelism []
-  "Computed from the parallelism factor and the number of available cores."
-  (m-do [fac (asks :forkjoin-parallelism-factor)]
-        [:let _ (check-type Number fac)]
-        [:return (long (* fac (number-of-cores)))]))
+  "Computed from the parallelism ratio and the number of available cores."
+  (m-do [ratio (asks :forkjoin-parallelism-ratio)]
+        [:let _ (check-type Number ratio)]
+        [:return (long (* ratio (number-of-cores)))]))
 
 (defn- default-forkjoin-thread-factory []
   (m-do [uncaught (asks :forkjoin-uncaught-exception-handler)]
+        [:let _ (check-type Thread$UncaughtExceptionHandler uncaught)]
         [:return
          (reify
            ForkJoinPool$ForkJoinWorkerThreadFactory

@@ -9,7 +9,9 @@
 
 (defmacro inheritable-binding
   [bindings & body]
-  `(let [bind# (fn [bindings#] (doseq [[v# value#] bindings#] (.set v# value#)))
+  `(let [bind# (fn [bindings#]
+                 (doseq [[v# value#] bindings#]
+                   (.set ^InheritableThreadLocal v# value#)))
          inner-bindings# (hash-map ~@bindings)
          outer-bindings# (into {} (for [[k# _#] inner-bindings#] [k# (deref k#)]))]
      (try
@@ -19,7 +21,7 @@
          (bind# outer-bindings#)))))
 
 (defn inheritable-thread-local [value]
-  (doto (proxy [InheritableThreadLocal IDeref] [] (deref [] (.get this))) (.set value)))
+  (doto (proxy [InheritableThreadLocal IDeref] [] (deref [] (.get ^InheritableThreadLocal this))) (.set value)))
 
 ;; the implicit context and its accessors
 
@@ -31,7 +33,7 @@
   [m & body]
   `(inheritable-binding [implicit-context ~m] ~@body))
 
-(defn all-context [] @implicit-context)
+(defn get-context [] @implicit-context)
 
 (defn from-context [f] (f @implicit-context))
 
