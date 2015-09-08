@@ -8,13 +8,14 @@
 ;; configuration
 
 (defn- default-executor []
-  "Remember, 'executor' is a arity-0 fn."
+  "Remember, 'executor' is a arity-0 fn.
+  It should be instantiated exactly once on creation of the context."
   (m-do [policy (asks :executor-policy)
          executor (case policy
                     :forkjoin (asks :forkjoin-executor)
                     :threadpool (asks :threadpool-executor)
                     :single-threaded (asks :single-threaded-executor)
-                    (invalid-config! policy "Unknown executor-policy"))]
+                    (invalid-config! policy "Unknown :executor-policy"))]
         [:return executor]))
 
 (defn- default-executor-policy []
@@ -57,16 +58,18 @@
 
 ;; context
 
-(defn add-executor-context [context initial-config]
-  (let [c (merge-config (default-execution-configuration) initial-config)
-        ^ExecutorService e ((:executor c))
-        ^ScheduledExecutorService s ((:scheduler-executor c))]
-    (merge context
-           {:config    c
-            :executor  e
-            :scheduler s}
-           (when (instance? ForkJoinPool e)
-             {:recursive-action (:forkjoin-recursive-action c)
-              :managed-blocker  (:forkjoin-managed-blocker c)}))))
+(defn add-execution-context [context initial-config]
+  "Instantiate all context-specific values."
+  (with-context context
+    (let [c (merge-config (default-execution-configuration) initial-config)
+          ^ExecutorService e ((:executor c))
+          ^ScheduledExecutorService s ((:scheduler-executor c))]
+      (merge context
+             {:config    c
+              :executor  e
+              :scheduler s}
+             (when (instance? ForkJoinPool e)
+               {:recursive-action (:forkjoin-recursive-action c)
+                :managed-blocker  (:forkjoin-managed-blocker c)})))))
 
 ;; eof

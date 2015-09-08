@@ -50,10 +50,10 @@
     IMatchLookup
     (val-at [_ k d] (if (= Left k) v d))))
 
-(defn right? [e ri le]
+(defn right? [e rt lt]
   (matchm [e]
-          [{Right v}] (ri v)
-          [{Left v}] (le v)))
+          [{Right v}] (rt v)
+          [{Left v}] (lt v)))
 
 (defn mirror [e]
   "Needed for arrows. Arrows?"

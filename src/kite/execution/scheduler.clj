@@ -2,13 +2,15 @@
 
 (import
   (java.util.concurrent
+    TimeUnit
     ThreadFactory
-    Executors))
+    Executors
+    ScheduledExecutorService))
 
 ;; scheduler
 
 (defn- default-scheduler-error-reporter []
-  (reader (fn [msg e] (println "scheduler:" msg ":" e))))
+  (reader (fn [msg e] (error "scheduler-error-reporter:" msg ":" e))))
 
 (defn- default-scheduler-uncaught-exception-handler []
   (m-do [reporter (asks :scheduler-error-reporter)]
@@ -35,5 +37,30 @@
          _ (check-type ThreadFactory threadfactory)]
         [:return
          (fn [] (Executors/newScheduledThreadPool mn threadfactory))]))
+
+;; fn
+
+(defn schedule-once [f milliseconds]
+  {:pre [fn? f
+         number? milliseconds]}
+  (let [scheduler (from-context :scheduler)
+        inner-context (get-context)
+        inner-f (fn [] (with-context inner-context (f)))]
+    (.schedule
+      ^ScheduledExecutorService scheduler
+      ^Runnable inner-f
+      ^Long milliseconds TimeUnit/MILLISECONDS)))
+
+(defn schedule-repeatedly [f initial-delay repeated-delay]
+  {:pre [fn? f
+         number? initial-delay
+         number? repeated-delay]}
+  (let [scheduler (from-context :scheduler)
+        inner-context (get-context)
+        inner-f (fn [] (with-context inner-context (f)))]
+    (.scheduleAtFixedRate
+      ^ScheduledExecutorService scheduler
+      ^Runnable inner-f
+      ^Long initial-delay ^Long repeated-delay TimeUnit/MILLISECONDS)))
 
 ;; eof

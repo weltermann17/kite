@@ -12,7 +12,7 @@
 ;; threadpool
 
 (defn- default-threadpool-error-reporter []
-  (reader (fn [msg e] (println "threadpool:" msg ":" e))))
+  (reader (fn [msg e] (error "threadpool-error-reporter:" msg ":" e))))
 
 (defn- default-threadpool-uncaught-exception-handler []
   (m-do [reporter (asks :threadpool-error-reporter)]
@@ -38,20 +38,21 @@
                      (set-thread (Thread. r) uncaught)))]))
 
 (defn- default-threadpool-blocking-queue-capacity []
-  (reader (* 32 1024)))
+  "You don't want this to be much larger than maximum-size, througput would suffer."
+  (m-do [mx (asks :threadpool-maximum-size)]
+        [:let _ (check-type Long mx)]
+        [:return (* 1 mx)]))
 
 (defn- default-threadpool-blocking-queue []
   "Contains a hack to type-hint 'this' before calling proxy-super.
   This will only work for public methods on super, though."
   (m-do [capacity (asks :threadpool-blocking-queue-capacity)]
-        [:let _
-         (check-type Long capacity)]
+        [:let _ (check-type Long capacity)]
         [:return
          (proxy [ArrayBlockingQueue] [capacity]
            (offer [e]
-             (let [^ArrayBlockingQueue this this]
-               (comment this)
-               (proxy-super put e) true)))]))
+             (let [^ArrayBlockingQueue this this] (comment this)
+                                                  (proxy-super put e) true)))]))
 
 (defn- default-threadpool-rejection-policy []
   (reader (ThreadPoolExecutor$DiscardPolicy.)))

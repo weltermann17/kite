@@ -3,5 +3,6 @@
 (load "control/core")
 (load "control/equality")
 (load "control/exception")
+(load "control/logging")
 
 ;; eof

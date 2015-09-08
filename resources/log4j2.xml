@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn" strict="true"
+               shutdownHook="disable">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%date{HH:mm:ss.SSS}] [%level] [%logger] %msg%n"/>
+        </Console>
+        <RollingFile name="RollingFile"
+                     fileName="target/logs/pleasant.log"
+                     filePattern="target/logs/pleasant.log.%d{yyyyMMdd-HHmm}-%i"
+                     immediateFlush="false">
+            <PatternLayout pattern="[%date{HH:mm:ss.SSS}] [%level] [%logger] %msg%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="50 MB"/>
+                <TimeBasedTriggeringPolicy interval="10" modulate="true"/>
+            </Policies>
+        </RollingFile>
+        <Async name="AsyncRollingFile">
+            <AppenderRef ref="RollingFile"/>
+        </Async>
+    </Appenders>
+    <Loggers>
+        <Root level="trace">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AsyncRollingFile"/>
+        </Root>
+        <Logger name="org.reflections.Reflections" level="error"
+                additivity="false"/>
+        <Logger name="org.apache.activemq" level="error"
+                additivity="false"/>
+        <Logger name="org.apache.aries" level="error"
+                additivity="false"/>
+        <Logger name="org.apache.camel" level="warn"
+                additivity="false"/>
+        <Logger name="org.apache.camel.management" level="error"
+                additivity="false"/>
+        <Logger name="org.apache.camel.impl" level="error"
+                additivity="false"/>
+        <Logger name="org.springframework" level="error"
+                additivity="false"/>
+        <Logger name="akka.camel" level="error"
+                additivity="false"/>
+        <Logger name="scala.slick" level="error"
+                additivity="false"/>
+        <Logger name="com.typesafe.slick" level="off"
+                additivity="false"/>
+        <Logger name="com.ning.http.client" level="off"
+                additivity="false"/>
+    </Loggers>
+</Configuration>

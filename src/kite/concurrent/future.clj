@@ -31,6 +31,10 @@
         (if (= v not-yet-completed)
           (conj! callbacks f)
           (execute f v))))
+    (on-success [this f]
+      (on-complete this (fn [a] (when (success? a) (f @a)))))
+    (on-failure [this f]
+      (on-complete this (fn [a] (when (failure? a) (f @a)))))
 
     IDeref
     (deref [_] "Actually a double deref, because value is a volatile." @value)
@@ -59,19 +63,30 @@
 
 ;; fn
 
+(defn on-success-or-failure [f succ fail]
+  "Combine a call to on-success and on-failure. As an extra goody
+  'succ' is surrounded by a try/catch that will call 'fail' in case
+  of an exception that escapes the scope of 'succ'."
+  (on-success f (fn [v] (try (succ v) (catch Throwable e (fail e)))))
+  (on-failure f fail)
+  f)
+
 (defn immediate [v]
+  "Will always return a Success, v must not throw an exception.
+   If the result of v is unknown better use 'future' instead."
   (let [p (promise)]
     (complete p (success v))
     (->future p)))
 
-(defn failed [v]
+(defn failed-future [v]
+  "Will always return a Failure, v must not throw an exception.
+   If the result of v is unknown better use 'future' instead."
   (let [p (promise)]
     (complete p (failure v))
     (->future p)))
 
 (defn- failed-only [f]
-  {:post [(satisfies? Future %)]}
-  (try f (catch Throwable e (failed e))))
+  (try f (catch Throwable e (failed-future e))))
 
 ;; macro
 

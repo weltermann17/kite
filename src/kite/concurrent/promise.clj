@@ -9,7 +9,12 @@
   (^Result await [_ milliseconds]
     "Should be used for testing only. 'Monadic use' should be preferred. Timeout in milliseconds must be > 0.")
   (on-complete [_ f]
-    "Adds callbacks executed on completion or calls them directly if already completed."))
+    "Adds a callback executed on completion or calls it directly if already completed.
+     'f' must expect a Result.")
+  (on-success [_ f]
+    "Adds a callback executed only on success. 'f' must expect the value inside the Success.")
+  (on-failure [_ f]
+    "Adds a callback executed only on failure. 'f' must expect the value inside the Failure."))
 
 (defprotocol Promise
   (complete [_ v]

@@ -8,7 +8,7 @@
 ;; single-threaded
 
 (defn- default-single-threaded-error-reporter []
-  (reader (fn [msg e] (println "single-threaded:" msg ":" e))))
+  (reader (fn [msg e] (error "single-threaded-error-reporter:" msg ":" e))))
 
 (defn- default-single-threaded-uncaught-exception-handler []
   (m-do [reporter (asks :single-threaded-error-reporter)]

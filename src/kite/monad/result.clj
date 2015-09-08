@@ -29,7 +29,7 @@
     Object
     (equals [this o] (test-eq this o Success #(= v @o)))
     (hashCode [_] (hash v))
-    (toString [_] (str "Success " v))
+    (toString [_] (<< "Success ~{v}"))
 
     Functor
     (-fmap [_ f] (result (f v)))
@@ -56,14 +56,12 @@
     (-failure [_] v)
 
     IDeref
-    (deref [_]
-      "Throws v if it is a Throwable else returns it."
-      (if (instance? Throwable v) (throw v) v))
+    (deref [_] v)
 
     Object
     (equals [this o] (test-eq this o Failure #(= v @o)))
     (hashCode [_] (hash v))
-    (toString [_] (str "Failure " v))
+    (toString [_] (<< "Failure ~{v}"))
 
     Functor
     (-fmap [m _] m)
@@ -81,9 +79,7 @@
   ([r succ fail]
    "A lot like an 'if': if 'r' is a Success apply 'succ' to it else apply 'fail' to it.
     Note: succ/fail must expect the Result, not the dereferenced internal value."
-   (matchm [r]
-           [{Success _}] (succ r)
-           [{Failure _}] (fail r)))
+   (if (satisfies? Success r) (succ r) (fail r)))
   ([r]
    "Just testing for instance of Success."
    (satisfies? Success r)))

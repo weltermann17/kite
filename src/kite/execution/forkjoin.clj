@@ -11,7 +11,7 @@
 ;; forkjoin
 
 (defn- default-forkjoin-error-reporter []
-  (reader (fn [msg e] (println "forkjoin-error-reporter:" msg ":" e))))
+  (reader (fn [msg e] (error "forkjoin-error-reporter:" msg ":" e))))
 
 (defn- default-forkjoin-uncaught-exception-handler []
   (m-do [reporter (asks :forkjoin-error-reporter)]

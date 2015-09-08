@@ -2,7 +2,7 @@
 
 ; (expect (type @(result (/ 2 0))) (type @(result (/ 1 0))))
 (expect nil (deref (failure nil)))
-(expect ArithmeticException (deref (success? (result (/ 1 0)) inc identity)))
+(expect ArithmeticException @(success? (result (/ 1 0)) inc identity))
 (expect ArithmeticException (deref (fmap inc (result (/ 1 0)))))
 (expect OutOfMemoryError (failure (OutOfMemoryError.)))
 (expect ArithmeticException @(result (/ 1 0)))
@@ -10,7 +10,7 @@
 (expect ArithmeticException (type @(success (ArithmeticException.))))
 (expect ArithmeticException @(success (ArithmeticException.)))
 (expect String (str @(success (ArithmeticException.))))
-(expect ArithmeticException (str @(failure (ArithmeticException.))))
+(expect ArithmeticException @(failure (ArithmeticException.)))
 (expect (partial satisfies? Failure) (failure (ArithmeticException.)))
 (expect (success 2) (result (+ 1 1)))
 (expect (success 2) (fmap inc (result (+ 1 0))))

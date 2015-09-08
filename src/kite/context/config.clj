@@ -17,7 +17,7 @@
 
 (defn merge-config
   ([existing-config new-config]
-   (merge-config 5 10 existing-config new-config))
+   (merge-config 10 20 existing-config new-config))
   ([reduce-by-min reduce-by-max existing-config new-config]
    {:pre  [(map? existing-config)
            (map? new-config)]
@@ -42,7 +42,7 @@
   )
 
 (defn check-type [t e]
-  "Throws an informational exception if 'e' is not of type 't', but only if 'e' is not a Reader."
+  "Throws an informational exception if 'e' is not an instance of type 't', but only if 'e' is not a Reader."
   (when-not (instance? t e)
     (invalid-config! e (<< "'~{e}' is not a '~{(typename t)}', but a '~{(typename (type e))}'"))))
 
