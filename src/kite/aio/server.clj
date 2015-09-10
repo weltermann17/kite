@@ -27,21 +27,15 @@
                  (.bind address backlog))))]
      (on-success-or-failure f succ fail))))
 
-(declare accept)
-
-(def ^:private accept-handler
-  (letfn [(handle [a v] (let [[server p succ fail] a]
-                          (complete p v) (accept server succ fail)))]
-    (reify CompletionHandler
-      (^void failed [_ ^Throwable e a]
-        (handle a (failure e)))
-      (^void completed [_ socket a]
-        (handle a (success socket))))))
-
 (defn accept [^AsynchronousServerSocketChannel server succ fail]
   (let [p (promise)
-        f (on-success-or-failure (->future p) succ fail)]
-    (.accept server [server p succ fail] accept-handler)
-    f))
+        h (letfn [(handle [v] (complete p v) (accept server succ fail))]
+            (reify CompletionHandler
+              (^void failed [_ ^Throwable e _]
+                (handle (failure e)))
+              (^void completed [_ socket _]
+                (handle (success socket)))))]
+    (on-success-or-failure (->future p) succ fail)
+    (.accept server nil h)))
 
 ;; eof

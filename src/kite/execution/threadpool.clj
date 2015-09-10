@@ -21,14 +21,14 @@
            (uncaughtException [_ t e] (reporter t e)))]))
 
 (defn- default-threadpool-minimum-size []
-  (reader (* 1 (number-of-cores))))
+  (reader (* 2 (number-of-cores))))
 
 (defn- default-threadpool-maximum-size []
-  (reader (* 2 (number-of-cores))))
+  (reader (* 8 (number-of-cores))))
 
 (defn- default-threadpool-keep-alive []
   "Keep-alive timeout in milliseconds."
-  (reader 0))
+  (reader (* 60 1000)))
 
 (defn- default-threadpool-thread-factory []
   (m-do [uncaught (asks :threadpool-uncaught-exception-handler)]
@@ -41,7 +41,7 @@
   "You don't want this to be much larger than maximum-size, througput would suffer."
   (m-do [mx (asks :threadpool-maximum-size)]
         [:let _ (check-type Long mx)]
-        [:return (* 1 mx)]))
+        [:return (* 16 mx)]))
 
 (defn- default-threadpool-blocking-queue []
   "Contains a hack to type-hint 'this' before calling proxy-super.

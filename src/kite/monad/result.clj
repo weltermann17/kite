@@ -2,11 +2,9 @@
 
 (defprotocol Result)
 
-(defprotocol Success
-  (-success [_]))
+(defprotocol Success)
 
-(defprotocol Failure
-  (-failure [_]))
+(defprotocol Failure)
 
 (declare failure success)
 
@@ -21,7 +19,6 @@
   (reify
     Result
     Success
-    (-success [_] v)
 
     IDeref
     (deref [_] v)
@@ -53,7 +50,6 @@
   (reify
     Result
     Failure
-    (-failure [_] v)
 
     IDeref
     (deref [_] v)

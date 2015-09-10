@@ -24,7 +24,7 @@
    (execute (fn [] (f v))))
   ([f]
    (let [executor (from-context :executor)
-         inner-context (get-context)
+         inner-context (all-context)
          inner-f (fn [] (with-context inner-context (f)))]
      (if (instance? ForkJoinPool executor)
        (if (ForkJoinTask/inForkJoinPool)
@@ -39,7 +39,7 @@
    (execute (fn [] (f v))))
   ([f]
    (let [executor (from-context :executor)
-         inner-context (get-context)
+         inner-context (all-context)
          inner-f (fn [] (with-context inner-context (f)))]
      (if (instance? ForkJoinPool executor)
        (let [managed-blocker (from-context :managed-blocker)

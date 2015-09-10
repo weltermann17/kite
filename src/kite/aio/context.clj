@@ -10,18 +10,25 @@
    :socket-keep-alive          (default-socket-keep-alive)
    :socket-no-delay            (default-socket-no-delay)
    :socket-read-write-timeout  (default-socket-read-write-timeout)
+   :byte-buffer-pool           (default-byte-buffer-pool)
+   :byte-buffer-size           (default-byte-buffer-size)
+   :byte-buffer-pool-size      (default-byte-buffer-pool-size)
    })
 
 ;; context
 
-(defn add-aio-context [context initial-config]
+(defn add-aio-context [context config]
   (with-context context
-    (let [c (merge-config (default-aio-configuration) initial-config)
+    (let [c (merge-config (default-aio-configuration) config)
           ^AsynchronousChannelGroup g ((:channel-group c))
-          ^Long t (:socket-read-write-timeout c)]
+          ^Long t (:socket-read-write-timeout c)
+          ^Long s (:byte-buffer-size c)
+          p ((:byte-buffer-pool c))]
       (merge context
              {:config                    c
               :channel-group             g
-              :socket-read-write-timeout t}))))
+              :socket-read-write-timeout t
+              :byte-buffer-pool          p
+              :byte-buffer-size          s}))))
 
 ;; eof

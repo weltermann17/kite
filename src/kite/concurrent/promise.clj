@@ -42,7 +42,7 @@
       (->future [_] future)
 
       IDeref
-      (deref [_] "Actually a double deref, because value is a volatile." @value)
+      (deref [_] @value)
 
       Object
       (equals [this o] (test-eq this o Promise #(= @value @o)))

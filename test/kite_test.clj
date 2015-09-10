@@ -1,6 +1,8 @@
 (ns kite-test
   (:refer-clojure :exclude [await future promise]))
 
+;; (set! *warn-on-reflection* true)
+
 (require '[expectations :refer :all]
          '[kite.control :refer :all]
          '[kite.category :refer :all]

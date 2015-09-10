@@ -19,7 +19,7 @@
                    (uncaughtException [_ t e] (reporter t e)))]))
 
 (defn- default-forkjoin-parallelism-ratio []
-  (reader 2.0))
+  (reader 1.0))
 
 (defn- default-forkjoin-parallelism []
   "Computed from the parallelism ratio and the number of available cores."

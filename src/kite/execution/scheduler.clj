@@ -44,7 +44,7 @@
   {:pre [fn? f
          number? milliseconds]}
   (let [scheduler (from-context :scheduler)
-        inner-context (get-context)
+        inner-context (all-context)
         inner-f (fn [] (with-context inner-context (f)))]
     (.schedule
       ^ScheduledExecutorService scheduler
@@ -56,7 +56,7 @@
          number? initial-delay
          number? repeated-delay]}
   (let [scheduler (from-context :scheduler)
-        inner-context (get-context)
+        inner-context (all-context)
         inner-f (fn [] (with-context inner-context (f)))]
     (.scheduleAtFixedRate
       ^ScheduledExecutorService scheduler

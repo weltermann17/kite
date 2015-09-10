@@ -33,7 +33,7 @@
   [m & body]
   `(inheritable-binding [implicit-context ~m] ~@body))
 
-(defn get-context [] @implicit-context)
+(defn all-context [] @implicit-context)
 
 (defn from-context [f] (f @implicit-context))
 

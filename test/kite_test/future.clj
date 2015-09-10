@@ -66,11 +66,12 @@
     (expect (success 3) (! f4))
     (expect failure? (! f5))
     ))
-(expect (success 9) (! (let [f (future (+ 8 1))]
-                         (on-success f #(expect 9 %))
-                         (on-failure f #(expect ArithmeticException %)) f)))
-(expect failure? (! (let [f (future (/ 8 0))]
-                      (on-success f #(expect 9 %))
-                      (on-failure f #(expect ArithmeticException %)) f)))
+(comment (expect (success 9) (! (let [f (future (+ 8 1))]
+                                  (on-success f #(expect 9 %))
+                                  (on-failure f #(expect ArithmeticException %)) f)))
+         (expect failure? (! (let [f (future (/ 8 0))]
+                               (on-success f #(expect 9 %))
+                               (on-failure f #(expect ArithmeticException %)) f)))
+         )
 
 ;; eof

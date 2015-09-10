@@ -13,31 +13,32 @@
     Future
     (await [this milliseconds]
       (letfn
-        [(f []
-            {:pre [(> milliseconds 0)]}
-            (let [phaser (Phaser. 1)]
-              (on-complete this (fn [_] (.arriveAndDeregister phaser)))
-              (try (.awaitAdvanceInterruptibly
-                     phaser
-                     0 milliseconds TimeUnit/MILLISECONDS)
-                   @value
-                   (catch TimeoutException _
-                     (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
-                   (catch Throwable e
-                     (failure e)))))]
-        (f)))
-    (on-complete [_ f]
+        [(-await []
+                 {:pre [(> milliseconds 0)]}
+                 (let [phaser (Phaser. 1)]
+                   (on-complete this (fn [_] (.arriveAndDeregister phaser)))
+                   (try (.awaitAdvanceInterruptibly
+                          phaser
+                          0 milliseconds TimeUnit/MILLISECONDS)
+                        @value
+                        (catch TimeoutException _
+                          (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
+                        (catch Throwable e
+                          (failure e)))))]
+        (-await)))
+    (on-complete [this f]
       (let [v @value]
         (if (= v not-yet-completed)
           (conj! callbacks f)
-          (execute f v))))
+          (execute f v)))
+      this)
     (on-success [this f]
       (on-complete this (fn [a] (when (success? a) (f @a)))))
     (on-failure [this f]
       (on-complete this (fn [a] (when (failure? a) (f @a)))))
 
     IDeref
-    (deref [_] "Actually a double deref, because value is a volatile." @value)
+    (deref [_] @value)
 
     Object
     (equals [this o] (test-eq this o Future #(= @value @o)))
@@ -68,8 +69,7 @@
   'succ' is surrounded by a try/catch that will call 'fail' in case
   of an exception that escapes the scope of 'succ'."
   (on-success f (fn [v] (try (succ v) (catch Throwable e (fail e)))))
-  (on-failure f fail)
-  f)
+  (on-failure f fail))
 
 (defn immediate [v]
   "Will always return a Success, v must not throw an exception.
