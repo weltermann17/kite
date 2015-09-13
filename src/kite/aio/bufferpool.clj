@@ -42,11 +42,10 @@
           (mk-buffer))
         ))))
 
-(defn ->byte-array [^ByteBuffer buffer]
-  "Converts buffer content to a byte-array and also releases the buffer to the buffer-pool."
+(defn ^ByteBuffer byte-array-from-buffer [^ByteBuffer buffer]
+  "Converts buffer content to a byte-array."
+  (.flip buffer)
   (let [a (byte-array (.remaining buffer))]
-    (.get buffer a)
-    (release-buffer buffer)
-    a))
+    (.get buffer a)))
 
 ;; eof

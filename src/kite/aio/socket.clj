@@ -5,10 +5,9 @@
    EOFException]
   [java.net
    StandardSocketOptions]
-  [java.nio
-   ByteBuffer]
   [java.nio.channels
    AsynchronousSocketChannel
+   ClosedChannelException
    CompletionHandler]
   [java.util.concurrent
    TimeUnit])
@@ -54,6 +53,14 @@
       (.setOption StandardSocketOptions/SO_SNDBUF sndbs)
       (.setOption StandardSocketOptions/TCP_NODELAY nodelay))))
 
+;; common stuff
+
+(defn- handle-failed [p ^Throwable e ^ByteBuffer b ^AsynchronousSocketChannel socket]
+  (when-not (instance? ClosedChannelException e)
+    (complete p (failure e)))
+  (release-buffer b)
+  (close-socket socket))
+
 ;; read handling
 
 (def ^:constant socket-eof-exception
@@ -67,13 +74,12 @@
         b (acquire-buffer)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
-              (complete p (failure e))
-              (release-buffer b)
-              (close-socket socket))
-            (^void completed [this bytesread a]
+              (handle-failed p e b socket))
+            (^void completed [_ bytesread _]
               (if (== -1 bytesread)
-                (.failed this socket-eof-exception a)
-                (complete p (success (->byte-array (.flip b)))))))]
+                (handle-failed p socket-eof-exception b socket)
+                (do (complete p (success (byte-array-from-buffer b)))
+                    (release-buffer b)))))]
     (on-success-or-failure (->future p) succ fail)
     (.read socket
            b
@@ -92,14 +98,11 @@
         b (doto (acquire-buffer) (.put bytes) (.flip))
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
-              (complete p (failure e))
-              (release-buffer b)
-              (close-socket socket))
+              (handle-failed p e b socket))
             (^void completed [this _ a]
               (if (== 0 (.remaining b))
-                (do
-                  (complete p (success []))
-                  (release-buffer b))
+                (do (complete p (success []))
+                    (release-buffer b))
                 (.write socket b timeout TimeUnit/MILLISECONDS a this))))]
     (on-success-or-failure (->future p) succ fail)
     (.write socket

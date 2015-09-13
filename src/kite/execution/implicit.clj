@@ -35,6 +35,7 @@
   (atom {}))
 
 (def implicit-context
+  ;; todo: should be private
   "Not to be used directly, should be accessed with 'with-context', 'from-context' and 'all-context'."
   (inheritable-thread-local {}))
 
@@ -45,7 +46,7 @@
   (swap! implicit-execution-contexts dissoc executor))
 
 (defn- reset-implicit-context [e]
-  (.set ^InheritableThreadLocal implicit-context (get @implicit-execution-contexts e)))
+  (.set ^InheritableThreadLocal implicit-context (@implicit-execution-contexts e)))
 
 ;; public fns
 
