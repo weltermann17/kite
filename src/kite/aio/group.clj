@@ -4,14 +4,15 @@
   [java.nio.channels
    AsynchronousChannelGroup]
   [java.util.concurrent
+   ExecutorService
    TimeUnit])
 
 ;; channel-group
 
 (defn- default-channel-group []
   (m-do [_ (ask)]
-        [:let executor (from-context :executor)]
-        [:return (fn [] (AsynchronousChannelGroup/withThreadPool executor))]))
+        [:return (fn [^ExecutorService executor]
+                   (AsynchronousChannelGroup/withThreadPool executor))]))
 
 (defn await-channel-group-termination
   ([^AsynchronousChannelGroup channel-group]
@@ -20,5 +21,12 @@
    (.awaitTermination
      channel-group
      timeout TimeUnit/MILLISECONDS)))
+
+(defn shutdown-channel-group
+  ([^AsynchronousChannelGroup channel-group]
+   (.shutdownNow channel-group))
+  ([^AsynchronousChannelGroup channel-group ^Long timeout]
+   (.shutdown channel-group)
+   (Thread/sleep timeout)))
 
 ;; eof

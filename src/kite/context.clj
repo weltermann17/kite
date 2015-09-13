@@ -6,7 +6,6 @@
   '[kite.category :refer :all]
   '[kite.monad :refer :all])
 
-(load "context/implicit")
 (load "context/helper")
 (load "context/config")
 

@@ -1,10 +1,5 @@
 (in-ns 'kite.execution)
 
-(import
-  (java.util.concurrent
-    ExecutorService
-    ScheduledExecutorService))
-
 ;; configuration
 
 (defn- default-executor []
@@ -60,16 +55,14 @@
 
 (defn add-execution-context [context initial-config]
   "Instantiate all context-specific values."
-  (with-context context
-    (let [c (merge-config (default-execution-configuration) initial-config)
-          ^ExecutorService e ((:executor c))
-          ^ScheduledExecutorService s ((:scheduler-executor c))]
-      (merge context
-             {:config    c
-              :executor  e
-              :scheduler s}
-             (when (instance? ForkJoinPool e)
-               {:recursive-action (:forkjoin-recursive-action c)
-                :managed-blocker  (:forkjoin-managed-blocker c)})))))
+  (let [c (merge-config (default-execution-configuration) initial-config)
+        e ((:executor c))]
+    (merge context
+           {:config    c
+            :executor  e
+            :scheduler ((:scheduler-executor c))}
+           (when (instance? ForkJoinPool e)
+             {:recursive-action (:forkjoin-recursive-action c)
+              :managed-blocker  (:forkjoin-managed-blocker c)}))))
 
 ;; eof

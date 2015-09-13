@@ -13,11 +13,6 @@
 (defn- default-forkjoin-error-reporter []
   (reader (fn [msg e] (error "forkjoin-error-reporter:" msg ":" e))))
 
-(defn- default-forkjoin-uncaught-exception-handler []
-  (m-do [reporter (asks :forkjoin-error-reporter)]
-        [:return (reify Thread$UncaughtExceptionHandler
-                   (uncaughtException [_ t e] (reporter t e)))]))
-
 (defn- default-forkjoin-parallelism-ratio []
   (reader 1.0))
 
@@ -27,20 +22,25 @@
         [:let _ (check-type Number ratio)]
         [:return (long (* ratio (number-of-cores)))]))
 
+(defn- default-forkjoin-uncaught-exception-handler []
+  (m-do [reporter (asks :forkjoin-error-reporter)]
+        [:return (reify Thread$UncaughtExceptionHandler
+                   (uncaughtException [_ t e] (reporter t e)))]))
+
 (defn- default-forkjoin-thread-factory []
-  (m-do [uncaught (asks :forkjoin-uncaught-exception-handler)]
-        [:let _ (check-type Thread$UncaughtExceptionHandler uncaught)]
-        [:return
-         (reify
-           ForkJoinPool$ForkJoinWorkerThreadFactory
-           (^ForkJoinWorkerThread newThread [_ ^ForkJoinPool p]
-             (set-thread (proxy [ForkJoinWorkerThread] [p]) uncaught)))]))
+  (reader (reify ForkJoinPool$ForkJoinWorkerThreadFactory
+            (^ForkJoinWorkerThread newThread [_ ^ForkJoinPool p]
+              (proxy [ForkJoinWorkerThread] [p]
+                (onStart []
+                  (when (= {} (all-context)) (reset-implicit-context p))
+                  (proxy-super onStart)))))))
 
 (defn- default-forkjoin-async-mode []
   (reader true))
 
 (defn- default-forkjoin-recursive-action []
-  (reader (fn [f] (proxy [RecursiveAction] [] (compute [] (f))))))
+  (reader (fn [f]
+            (proxy [RecursiveAction] [] (compute [] (f))))))
 
 (defn- default-forkjoin-managed-blocker []
   (reader (fn [f]
@@ -61,10 +61,17 @@
          _ (check-type Boolean async)
          _ (check-cond (>= parallelism 1))]
         [:return
-         (fn [] (ForkJoinPool.
-                  parallelism
-                  threadfactory
-                  uncaught
-                  async))]))
+         (fn [] (proxy [ForkJoinPool] [parallelism
+                                       threadfactory
+                                       uncaught
+                                       async]
+                  (shutdown []
+                    (let [^ForkJoinPool this this]
+                      (remove-implicit-context this)
+                      (proxy-super shutdown)))
+                  (shutdownNow []
+                    (let [^ForkJoinPool this this]
+                      (remove-implicit-context this)
+                      (proxy-super shutdownNow)))))]))
 
 ;; eof

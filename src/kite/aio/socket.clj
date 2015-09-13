@@ -43,18 +43,16 @@
   (try (.close socket) (catch Throwable _)))
 
 (defn configure-socket [^AsynchronousSocketChannel socket]
-  (try
-    (let [config (from-context :config)
-          keepalive (:socket-keep-alive config)
-          nodelay (:socket-no-delay config)
-          rcvbs (Integer/valueOf (int (:socket-receive-buffer-size config)))
-          sndbs (Integer/valueOf (int (:socket-send-buffer-size config)))]
-      (doto socket
-        (.setOption StandardSocketOptions/SO_KEEPALIVE keepalive)
-        (.setOption StandardSocketOptions/SO_RCVBUF rcvbs)
-        (.setOption StandardSocketOptions/SO_SNDBUF sndbs)
-        (.setOption StandardSocketOptions/TCP_NODELAY nodelay)))
-    (catch Throwable e (close-socket socket) (throw e))))
+  (let [config (from-context :config)
+        keepalive (:socket-keep-alive config)
+        nodelay (:socket-no-delay config)
+        rcvbs (Integer/valueOf (int (:socket-receive-buffer-size config)))
+        sndbs (Integer/valueOf (int (:socket-send-buffer-size config)))]
+    (doto socket
+      (.setOption StandardSocketOptions/SO_KEEPALIVE keepalive)
+      (.setOption StandardSocketOptions/SO_RCVBUF rcvbs)
+      (.setOption StandardSocketOptions/SO_SNDBUF sndbs)
+      (.setOption StandardSocketOptions/TCP_NODELAY nodelay))))
 
 ;; read handling
 

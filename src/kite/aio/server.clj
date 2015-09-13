@@ -6,6 +6,7 @@
    StandardSocketOptions]
   [java.nio.channels
    AsynchronousServerSocketChannel
+   AsynchronousCloseException
    CompletionHandler])
 
 ;; socket-server
@@ -29,10 +30,13 @@
 
 (defn accept [^AsynchronousServerSocketChannel server succ fail]
   (let [p (promise)
-        h (letfn [(handle [v] (complete p v) (accept server succ fail))]
+        h (letfn [(handle [v]
+                          (complete p v)
+                          (accept server succ fail))]
             (reify CompletionHandler
               (^void failed [_ ^Throwable e _]
-                (handle (failure e)))
+                (when-not (instance? AsynchronousCloseException e)
+                  (handle (failure e))))
               (^void completed [_ socket _]
                 (handle (success socket)))))]
     (on-success-or-failure (->future p) succ fail)

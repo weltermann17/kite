@@ -21,7 +21,7 @@
         [:return (reify
                    ThreadFactory
                    (^Thread newThread [_ ^Runnable r]
-                     (set-thread (Thread. r) uncaught)))]))
+                     (configure-thread (Thread. r) uncaught)))]))
 
 (defn- default-single-threaded-executor []
   (m-do [threadfactory (asks :single-threaded-thread-factory)]

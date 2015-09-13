@@ -35,7 +35,7 @@
         [:return (reify
                    ThreadFactory
                    (^Thread newThread [_ ^Runnable r]
-                     (set-thread (Thread. r) uncaught)))]))
+                     (configure-thread (Thread. r) uncaught)))]))
 
 (defn- default-threadpool-blocking-queue-capacity []
   "You don't want this to be much larger than maximum-size, througput would suffer."
@@ -51,8 +51,9 @@
         [:return
          (proxy [ArrayBlockingQueue] [capacity]
            (offer [e]
-             (let [^ArrayBlockingQueue this this] (comment this)
-                                                  (proxy-super put e) true)))]))
+             (let [^ArrayBlockingQueue this this]
+               (comment this)
+               (proxy-super put e) true)))]))
 
 (defn- default-threadpool-rejection-policy []
   (reader (ThreadPoolExecutor$DiscardPolicy.)))

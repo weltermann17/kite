@@ -18,7 +18,7 @@
 
 (defprotocol Promise
   (complete [_ v]
-    "Throws illegal-state! if called more than once.")
+    "Set the value and execute all callbacks. Throws illegal-state! if called more than once.")
   (^Future ->future [_]
     "Returns its corresponding future."))
 

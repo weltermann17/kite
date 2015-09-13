@@ -6,11 +6,11 @@
 (defn- default-byte-buffer-size []
   (reader (* 64 1024)))
 
-(defn- default-byte-buffer-pool-size []
-  (reader (* 1 1024)))
+(defn- default-byte-buffer-initial-pool-size []
+  (reader (* 0 1024)))
 
 (defn- default-byte-buffer-pool []
-  (m-do [poolsize (asks :byte-buffer-pool-size)
+  (m-do [poolsize (asks :byte-buffer-initial-pool-size)
          buffersize (asks :byte-buffer-size)]
         [:let
          _ (check-type Long poolsize)
@@ -18,9 +18,8 @@
          _ (check-cond (>= poolsize 0))
          _ (check-cond (>= buffersize 512))]
         [:return
-         (fn []
-           (atom (doall (for [_ (range poolsize)]
-                          (ByteBuffer/allocateDirect buffersize)))))]))
+         (fn [] (atom (doall (for [_ (range poolsize)]
+                               (ByteBuffer/allocateDirect buffersize)))))]))
 
 (defn- ^ByteBuffer mk-buffer []
   (let [buffersize (from-context :byte-buffer-size)]
@@ -28,6 +27,8 @@
 
 (defn release-buffer [^ByteBuffer buffer]
   (let [pool (from-context :byte-buffer-pool)]
+    (when (nil? pool) (error "rls pool nil"))
+    (when (nil? buffer) (error "rls buf nil"))
     (swap! pool conj (.clear buffer))))
 
 (defn ^ByteBuffer acquire-buffer []

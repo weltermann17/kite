@@ -9,7 +9,7 @@
 
 ;; common stuff
 
-(defn- set-thread [^Thread t ^Thread$UncaughtExceptionHandler uncaught]
+(defn- configure-thread [^Thread t ^Thread$UncaughtExceptionHandler uncaught]
   (doto t
     (.setDaemon true)
     (.setUncaughtExceptionHandler uncaught)))

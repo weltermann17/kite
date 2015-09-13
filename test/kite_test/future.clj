@@ -5,7 +5,7 @@
 
 ;; shortcuts
 
-(def ctx (add-execution-context {} {}))
+(def ctx (add-execution-context {:blabla "1"} {}))
 
 (defmacro ! [body] `(with-context ctx (await ~body 10)))
 

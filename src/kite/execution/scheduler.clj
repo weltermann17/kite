@@ -23,7 +23,7 @@
         [:return (reify
                    ThreadFactory
                    (^Thread newThread [_ ^Runnable r]
-                     (set-thread (Thread. r) uncaught)))]))
+                     (configure-thread (Thread. r) uncaught)))]))
 
 (defn- default-scheduler-minimum-size []
   (reader 0))

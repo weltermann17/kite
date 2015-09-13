@@ -20,8 +20,8 @@
               :threadpool-rejection-policy (ThreadPoolExecutor$AbortPolicy.)
               :forkjoin-error-reporter     (fn [m e] (println "my-own-reporter" e "<-" m))
               }
-      ctx1 (add-execution-context {} config)
-      ctx2 (add-execution-context {} {:forkjoin-parallelism 3})
+      ctx1 (add-execution-context {:blabla2 "2"} config)
+      ctx2 (add-execution-context {:blabla3 "3"} {:forkjoin-parallelism 3})
       cfg1 (:config ctx1)
       ;e1 (run-reader (execute (fn [] (Thread/sleep 10) (println "Hi thread!"))) ctx1)
       ;e2 (run-reader (execute (fn [] (Thread/sleep 100) (println "Hi fork!"))) ctx2)
