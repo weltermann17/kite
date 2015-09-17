@@ -70,16 +70,18 @@
                    ^Long timeout
                    succ
                    fail]
-  (let [p (promise)
+  (let [;p (promise)
         b (acquire-buffer)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
-              (handle-failed p e b socket))
+              (handle-failed nil e b socket))
             (^void completed [_ bytesread _]
               (if (== -1 bytesread)
-                (handle-failed p socket-eof-exception b socket)
-                (complete p (success (byte-array-from-buffer b))))))]
-    (on-success-or-failure (->future p) succ fail)
+                (handle-failed nil socket-eof-exception b socket)
+                ;(complete p (success (byte-array-from-buffer b)))
+                (succ (byte-array-from-buffer b))
+                )))]
+    ;(on-success-or-failure (->future p) succ fail)
     (.read socket
            b
            timeout TimeUnit/MILLISECONDS
@@ -93,18 +95,20 @@
                     ^Long timeout
                     succ
                     fail]
-  (let [p (promise)
+  (let [;p (promise)
         b (byte-buffer-from-array bytes)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
-              (handle-failed p e b socket))
+              (handle-failed nil e b socket))
             (^void completed [this _ a]
               (if (== 0 (.remaining b))
                 (do (release-buffer b)
-                    (complete p (success [])))
+                    ;(complete p (success []))
+                    (succ [])
+                    )
                 (.write socket b timeout TimeUnit/MILLISECONDS a this))
               ))]
-    (on-success-or-failure (->future p) succ fail)
+    ;(on-success-or-failure (->future p) succ fail)
     (.write socket
             b
             timeout TimeUnit/MILLISECONDS

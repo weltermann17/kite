@@ -7,7 +7,8 @@
 
 (defprotocol Future
   (^Result await [_ milliseconds]
-    "Should be used for testing only. 'Monadic use' should be preferred. Timeout in milliseconds must be > 0.")
+    "Should be used for testing only. 'Monadic use' or 'completion-handlers' should be preferred.
+    Timeout in milliseconds must be > 0.")
   (on-complete [_ f]
     "Adds a callback executed on completion or calls it directly if already completed.
      'f' must expect a Result.")

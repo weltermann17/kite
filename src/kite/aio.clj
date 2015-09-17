@@ -10,7 +10,7 @@
   '[kite.execution :refer :all]
   '[kite.concurrent :refer :all])
 
-(load "aio/bufferpool")
+(load "aio/buffer")
 (load "aio/group")
 (load "aio/socket")
 (load "aio/server")
