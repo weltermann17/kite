@@ -20,7 +20,7 @@
                             write-e (mk-err :write)]
                         (accept server
                                 (fn [socket]
-                                  (configure-socket socket)
+                                  ;(configure-socket socket)
                                   (letfn [(write-h [_]
                                                    (read-socket socket
                                                                 timeout

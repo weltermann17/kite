@@ -24,12 +24,12 @@
    (execute (fn [] (f v))))
   ([f]
    (let [executor (from-context :executor)]
-     ;(if (instance? ForkJoinPool executor)
-     ; (if (ForkJoinTask/inForkJoinPool)
-     ;   (let [recursive-action (from-context :recursive-action)]
-     ;     (info "fork") (.fork ^RecursiveAction (recursive-action f)))
-     ; (.execute ^ForkJoinPool executor ^Runnable f)
-     (.execute ^ExecutorService executor f))))
+     (if (instance? ForkJoinPool executor)
+       (if (ForkJoinTask/inForkJoinPool)
+         (let [recursive-action (from-context :recursive-action)]
+           (.fork ^RecursiveAction (recursive-action f)))
+         (.execute ^ForkJoinPool executor ^Runnable f))
+       (.execute ^ExecutorService executor f)))))
 
 (defn execute-blocking
   "Use this when f is likely to call blocking code."
@@ -47,7 +47,7 @@
          (.execute ^ExecutorService executor f))))))
 
 (defn execute-all [fs v]
-  (doseq [f fs] (execute f v)))
+  (doseq [f fs] (f v)))                                     ;(execute f v)))
 
 (comment execute-blocking)
 
