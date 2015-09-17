@@ -56,7 +56,7 @@
         fut-fail (fn [w i] (future (Thread/sleep w) (/ i 0)))
         f1 (first-result (fut 30 1) (fut 20 2) (fut 10 3))
         f2 (first-success (fut 30 1) (fut 20 2) (fut 10 3))
-        f3 (first-result (fut-fail 30 1) (fut 20 2) (fut 10 3))
+        f3 (first-result (fut-fail 30 1) (fut 20 2) (fut 1 3))
         f4 (first-success (fut-fail 30 1) (fut-fail 20 2) (fut 10 3))
         f5 (first-success (fut-fail 30 1) (fut-fail 20 2) (fut-fail 10 3))
         ]
