@@ -53,18 +53,18 @@
       (.setOption StandardSocketOptions/SO_SNDBUF sndbs)
       (.setOption StandardSocketOptions/TCP_NODELAY nodelay))))
 
-;; common stuff
+;; common handling
 
 (defn- handle-failed [p ^Throwable e ^ByteBuffer b ^AsynchronousSocketChannel socket]
-  (when-not (instance? ClosedChannelException e)
-    (complete p (failure e)))
   (release-buffer b)
-  (close-socket socket))
-
-;; read handling
+  (close-socket socket)
+  (when-not (or (instance? ClosedChannelException e) (= "Connection reset by peer" (.getMessage e)))
+    (complete p (failure e))))
 
 (def ^:constant socket-eof-exception
   (EOFException. "AsynchronousSocketChannel.read returned -1"))
+
+;; read handling
 
 (defn read-socket [^AsynchronousSocketChannel socket
                    ^Long timeout
@@ -78,8 +78,7 @@
             (^void completed [_ bytesread _]
               (if (== -1 bytesread)
                 (handle-failed p socket-eof-exception b socket)
-                (do (complete p (success (byte-array-from-buffer b)))
-                    (release-buffer b)))))]
+                (complete p (success (byte-array-from-buffer b))))))]
     (on-success-or-failure (->future p) succ fail)
     (.read socket
            b
@@ -95,15 +94,16 @@
                     succ
                     fail]
   (let [p (promise)
-        b (doto (acquire-buffer) (.put bytes) (.flip))
+        b (byte-buffer-from-array bytes)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
               (handle-failed p e b socket))
             (^void completed [this _ a]
               (if (== 0 (.remaining b))
-                (do (complete p (success []))
-                    (release-buffer b))
-                (.write socket b timeout TimeUnit/MILLISECONDS a this))))]
+                (do (release-buffer b)
+                    (complete p (success [])))
+                (.write socket b timeout TimeUnit/MILLISECONDS a this))
+              ))]
     (on-success-or-failure (->future p) succ fail)
     (.write socket
             b

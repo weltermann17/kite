@@ -23,32 +23,28 @@
   ([f v]
    (execute (fn [] (f v))))
   ([f]
-   (let [executor (from-context :executor)
-         inner-context (all-context)
-         inner-f (fn [] (with-context inner-context (f)))]
+   (let [executor (from-context :executor)]
      (if (instance? ForkJoinPool executor)
        (if (ForkJoinTask/inForkJoinPool)
          (let [recursive-action (from-context :recursive-action)]
-           (.fork ^RecursiveAction (recursive-action inner-f)))
-         (.execute ^ForkJoinPool executor ^Runnable inner-f))
-       (.execute ^ExecutorService executor inner-f)))))
+           (.fork ^RecursiveAction (recursive-action f)))
+         (.execute ^ForkJoinPool executor ^Runnable f))
+       (.execute ^ExecutorService executor f)))))
 
 (defn execute-blocking
   "Use this when f is likely to call blocking code."
   ([f v]
    (execute (fn [] (f v))))
   ([f]
-   (let [executor (from-context :executor)
-         inner-context (all-context)
-         inner-f (fn [] (with-context inner-context (f)))]
+   (let [executor (from-context :executor)]
      (if (instance? ForkJoinPool executor)
        (let [managed-blocker (from-context :managed-blocker)
-             blocking-f (fn [] (ForkJoinPool/managedBlock (managed-blocker inner-f)))]
+             blocking-f (fn [] (ForkJoinPool/managedBlock (managed-blocker f)))]
          (if (ForkJoinTask/inForkJoinPool)
            (let [recursive-action (from-context :recursive-action)]
              (.fork ^RecursiveAction (recursive-action blocking-f)))
            (.execute ^ForkJoinPool executor ^Runnable blocking-f))
-         (.execute ^ExecutorService executor inner-f))))))
+         (.execute ^ExecutorService executor f))))))
 
 (defn execute-all [fs v]
   (doseq [f fs] (execute f v)))

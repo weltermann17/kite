@@ -7,7 +7,7 @@
   (reader (* 64 1024)))
 
 (defn- default-byte-buffer-initial-pool-size []
-  (reader (* 0 1024)))
+  (reader (* 1 1024)))
 
 (defn- default-byte-buffer-pool []
   (m-do [poolsize (asks :byte-buffer-initial-pool-size)
@@ -22,13 +22,10 @@
                                (ByteBuffer/allocateDirect buffersize)))))]))
 
 (defn- ^ByteBuffer mk-buffer []
-  (let [buffersize (from-context :byte-buffer-size)]
-    (ByteBuffer/allocateDirect buffersize)))
+  (ByteBuffer/allocateDirect (from-context :byte-buffer-size)))
 
 (defn release-buffer [^ByteBuffer buffer]
   (let [pool (from-context :byte-buffer-pool)]
-    (when (nil? pool) (error "rls pool nil"))
-    (when (nil? buffer) (error "rls buf nil"))
     (swap! pool conj (.clear buffer))))
 
 (defn ^ByteBuffer acquire-buffer []
@@ -42,10 +39,15 @@
           (mk-buffer))
         ))))
 
-(defn ^ByteBuffer byte-array-from-buffer [^ByteBuffer buffer]
-  "Converts buffer content to a byte-array."
-  (.flip buffer)
-  (let [a (byte-array (.remaining buffer))]
-    (.get buffer a)))
+(defn ^bytes byte-array-from-buffer [^ByteBuffer buffer]
+  "Converts buffer content to a byte-array and releases the buffer back to the pool."
+  (let [a (byte-array (.remaining (.flip buffer)))]
+    (.get buffer a)
+    (release-buffer buffer)
+    a))
+
+(defn ^ByteBuffer byte-buffer-from-array [^bytes a]
+  "Acquires a buffer from the pool and fills it with 'a'."
+  (doto (acquire-buffer) (.put a) (.flip)))
 
 ;; eof

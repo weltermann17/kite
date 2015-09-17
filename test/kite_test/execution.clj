@@ -56,15 +56,14 @@
           (dorun
             (for [i (range 1000)]
               (with-context (merge ctx2 {:i i})
-                (execute (fn []
-                           (let [j (from-context :i)]
-                             (if (not= i j)
-                               (println "not" i j)
-                               (when (= 0 (mod i 17))
-                                 (dorun (for [x (range 1000) y (range 1 100)] (/ x y)))
-                                 ;(Thread/sleep 500)
-                                 ;(println i j)
-                                 )))))))))
+                            (execute (fn []
+                                       (let [j (from-context :i)]
+                                         (if (not= i j)
+                                           (when (= 0 (mod i 17))
+                                             (dorun (for [x (range 1000) y (range 1 100)] (/ x y)))
+                                             ;(Thread/sleep 500)
+                                             ;(println i j)
+                                             )))))))))
   ;(expect nil (Thread/sleep 1000))
   ;(expect nil (println (:executor ctx2)))
   (expect Object (with-context ctx1 (schedule-once (fn [] (println (/ 1 0))) 500)))
