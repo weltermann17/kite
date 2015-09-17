@@ -31,13 +31,13 @@
 
 (defn promise []
   (let [value (atom not-yet-completed)
-        callbacks (atom [])
+        callbacks (transient [])
         future (mk-future value callbacks)]
     (reify
       Promise
       (complete [this v]
         (if (compare-and-set! value not-yet-completed v)
-          (execute-all @callbacks v)
+          (execute-all (persistent! callbacks) v)
           (illegal-state! (<< "A promise cannot be completed more than once, value already set = ~{@value}, value not accepted = ~{v}")))
         this)
       (->future [_] future)
