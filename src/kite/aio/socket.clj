@@ -74,12 +74,12 @@
         b (acquire-buffer)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
-              (handle-failed nil e b socket))
+              (handle-failed p e b socket))
             (^void completed [_ bytesread _]
               (if (== -1 bytesread)
-                (handle-failed nil socket-eof-exception b socket)
-                ;(complete p (success (byte-array-from-buffer b)))
-                (succ (byte-array-from-buffer b))
+                (handle-failed p socket-eof-exception b socket)
+                (complete p (success (byte-array-from-buffer b)))
+                ;(succ (byte-array-from-buffer b))
                 )))]
     (on-success-or-failure (->future p) succ fail)
     (.read socket
@@ -99,7 +99,7 @@
         b (byte-buffer-from-array bytes)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
-              (handle-failed nil e b socket))
+              (handle-failed p e b socket))
             (^void completed [this _ a]
               (if (== 0 (.remaining b))
                 (do (release-buffer b)
