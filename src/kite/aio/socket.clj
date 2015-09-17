@@ -70,7 +70,7 @@
                    ^Long timeout
                    succ
                    fail]
-  (let [;p (promise)
+  (let [p (promise)
         b (acquire-buffer)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
@@ -95,7 +95,7 @@
                     ^Long timeout
                     succ
                     fail]
-  (let [;p (promise)
+  (let [p (promise)
         b (byte-buffer-from-array bytes)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
