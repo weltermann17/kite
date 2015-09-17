@@ -58,8 +58,8 @@
 (defn- handle-failed [p ^Throwable e ^ByteBuffer b ^AsynchronousSocketChannel socket]
   (release-buffer b)
   (close-socket socket)
-  (when-not (or (instance? ClosedChannelException e) (= "Connection reset by peer" (.getMessage e)))
-    (complete p (failure e))))
+  (when p (when-not (or (instance? ClosedChannelException e) (= "Connection reset by peer" (.getMessage e)))
+            (complete p (failure e)))))
 
 (def ^:constant socket-eof-exception
   (EOFException. "AsynchronousSocketChannel.read returned -1"))
