@@ -47,7 +47,7 @@
          (.execute ^ExecutorService executor f))))))
 
 (defn execute-all [fs v]
-  (doseq [f fs] (f v)))
+  ((first fs) v))                                           ; (doseq [f fs] (f v)))
 
 (comment execute-blocking)
 
