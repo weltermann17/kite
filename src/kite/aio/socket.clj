@@ -78,8 +78,8 @@
             (^void completed [_ bytesread _]
               (if (== -1 bytesread)
                 (handle-failed p socket-eof-exception b socket)
-                (complete p (success (byte-array-from-buffer b)))
-                ;(succ (byte-array-from-buffer b))
+                ;(complete p (success (byte-array-from-buffer b)))
+                (succ (byte-array-from-buffer b))
                 )))]
     (on-success-or-failure (->future p) succ fail)
     (.read socket
