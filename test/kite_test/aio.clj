@@ -1,5 +1,7 @@
 (in-ns 'kite-test)
 
+(import java.nio.ByteBuffer)
+
 (def ^:private ^:constant response
   (let [c 48
         s "HTTP/1.1 200 OK\nConnection: keep-alive\nContent-Type: text/plain\nContent-Length: 4\nDate: Wed, 11 Mar 2015 13:13:24 GMT\n\npong"
@@ -21,18 +23,20 @@
                         (accept server
                                 (fn [socket]
                                   (configure-socket socket)
-                                  (letfn [(write-h [_]
+                                  (letfn [(write-h [^ByteBuffer b]
                                                    (read-socket socket
                                                                 timeout
+                                                                b
                                                                 read-h
                                                                 read-e))
-                                          (read-h [^bytes _]
+                                          (read-h [^ByteBuffer b]
+                                                  (doto b (.clear) (.put response) (.flip))
                                                   (write-socket socket
-                                                                response
+                                                                b
                                                                 timeout
                                                                 write-h
                                                                 write-e))]
-                                    (write-h [])))
+                                    (write-h (ByteBuffer/allocateDirect 10000))))
                                 (mk-err :accept))
                         (info server)))
                     (mk-err :server)))

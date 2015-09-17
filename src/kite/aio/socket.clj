@@ -56,7 +56,7 @@
 ;; common handling
 
 (defn- handle-failed [p ^Throwable e ^ByteBuffer b ^AsynchronousSocketChannel socket]
-  (release-buffer b)
+  ; (release-buffer b)
   (close-socket socket)
   (when-not (or (instance? ClosedChannelException e) (= "Connection reset by peer" (.getMessage e)))
     (complete p (failure e))))
@@ -68,18 +68,20 @@
 
 (defn read-socket [^AsynchronousSocketChannel socket
                    ^Long timeout
+                   ^ByteBuffer b
                    succ
                    fail]
   (let [p (promise)
-        b (acquire-buffer)
+        ;b (acquire-buffer)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
               (handle-failed p e b socket))
             (^void completed [_ bytesread _]
               (if (== -1 bytesread)
                 (handle-failed p socket-eof-exception b socket)
-                (complete p (success (byte-array-from-buffer b))))))]
+                (complete p (success b)))))]
     (on-success-or-failure (->future p) succ fail)
+    (.clear b)
     (.read socket
            b
            timeout TimeUnit/MILLISECONDS
@@ -89,19 +91,20 @@
 ;; write handling
 
 (defn write-socket [^AsynchronousSocketChannel socket
-                    ^bytes bytes
+                    ;^bytes bytes
+                    ^ByteBuffer b
                     ^Long timeout
                     succ
                     fail]
   (let [p (promise)
-        b (byte-buffer-from-array bytes)
+        ;b (byte-buffer-from-array bytes)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
               (handle-failed p e b socket))
             (^void completed [this _ a]
               (if (== 0 (.remaining b))
-                (do (release-buffer b)
-                    (complete p (success [])))
+                (do                                         ;(release-buffer b)
+                  (complete p (success b)))
                 (.write socket b timeout TimeUnit/MILLISECONDS a this))
               ))]
     (on-success-or-failure (->future p) succ fail)
