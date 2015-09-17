@@ -29,7 +29,7 @@
     (on-complete [this f]
       (let [v @value]
         (if (= v not-yet-completed)
-          (conj! callbacks f)
+          (swap! callbacks conj f)
           (execute f v)))
       this)
     (on-success [this f]

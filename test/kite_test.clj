@@ -18,7 +18,7 @@
 (load "kite_test/either")
 (load "kite_test/reader")
 (load "kite_test/result")
-(load "kite_test/future")
+;(load "kite_test/future")
 (load "kite_test/aio")
 
 ;; eof
