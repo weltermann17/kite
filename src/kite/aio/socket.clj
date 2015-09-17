@@ -81,7 +81,7 @@
                 ;(complete p (success (byte-array-from-buffer b)))
                 (succ (byte-array-from-buffer b))
                 )))]
-    ;(on-success-or-failure (->future p) succ fail)
+    (on-success-or-failure (->future p) succ fail)
     (.read socket
            b
            timeout TimeUnit/MILLISECONDS
@@ -108,7 +108,7 @@
                     )
                 (.write socket b timeout TimeUnit/MILLISECONDS a this))
               ))]
-    ;(on-success-or-failure (->future p) succ fail)
+    (on-success-or-failure (->future p) succ fail)
     (.write socket
             b
             timeout TimeUnit/MILLISECONDS
