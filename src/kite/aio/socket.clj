@@ -78,8 +78,8 @@
             (^void completed [_ bytesread _]
               (if (== -1 bytesread)
                 (handle-failed p socket-eof-exception b socket)
-                (do (complete p (success (byte-array-from-buffer b)))
-                    (comment (succ (byte-array-from-buffer b))))
+                ;(do (complete p (success (byte-array-from-buffer b)))
+                (succ (byte-array-from-buffer b))
                 )))]
     (on-success-or-failure (->future p) succ fail)
     (.read socket
@@ -103,8 +103,8 @@
             (^void completed [this _ a]
               (if (== 0 (.remaining b))
                 (do (release-buffer b)
-                    (do (complete p (success []))
-                        (comment (succ [])))
+                    ;(do (complete p (success []))
+                    (succ [])
                     )
                 (.write socket b timeout TimeUnit/MILLISECONDS a this))
               ))]
