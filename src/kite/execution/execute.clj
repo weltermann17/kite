@@ -27,9 +27,8 @@
      (if (instance? ForkJoinPool executor)
        ; (if (ForkJoinTask/inForkJoinPool)
        ;   (let [recursive-action (from-context :recursive-action)]
-       ;     (.fork ^RecursiveAction (recursive-action f)))
+       ;     (info "fork") (.fork ^RecursiveAction (recursive-action f)))
        (.execute ^ForkJoinPool executor ^Runnable f)
-       ;)
        (.execute ^ExecutorService executor f)))))
 
 (defn execute-blocking
