@@ -45,8 +45,8 @@
 (defn- remove-implicit-context [executor]
   (swap! implicit-execution-contexts dissoc executor))
 
-(defn- reset-implicit-context [e]
-  (.set ^InheritableThreadLocal implicit-context (@implicit-execution-contexts e)))
+(defn- reset-implicit-context [executor]
+  (.set ^InheritableThreadLocal implicit-context (@implicit-execution-contexts executor)))
 
 ;; public fns
 
@@ -56,13 +56,13 @@
 (defn from-context [f]
   (f @implicit-context))
 
-(defn with-context* [m]
-  (let [k (m :executor)]
-    (when k (add-implicit-context k m))))
+(defn with-context* [ctx]
+  (add-implicit-context (ctx :executor) ctx))
 
 (defmacro with-context
-  [m & body]
-  `(do (with-context* ~m)
-       (inheritable-binding [implicit-context ~m] ~@body)))
+  [ctx & body]
+  `(let [c# ~ctx]
+     (with-context* c#)
+     (inheritable-binding [implicit-context c#] ~@body)))
 
 ;; eof

@@ -33,6 +33,7 @@
               (proxy [ForkJoinWorkerThread] [p]
                 (onStart []
                   (when (= {} (all-context)) (reset-implicit-context p))
+                  (assert (not= {} (all-context)))
                   (proxy-super onStart)))))))
 
 (defn- default-forkjoin-async-mode []

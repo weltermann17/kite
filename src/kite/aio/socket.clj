@@ -157,4 +157,6 @@
             nil
             h)))
 
+(comment read-socket, write-socket)
+
 ;; eof

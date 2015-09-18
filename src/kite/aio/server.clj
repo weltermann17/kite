@@ -54,4 +54,6 @@
                 (handle succ socket))))]
     (.accept server nil h)))
 
+(comment accept)
+
 ;; eof

@@ -12,7 +12,7 @@
          '[kite.concurrent :refer :all]
          '[kite.aio :refer :all])
 
-(load "kite_test/execution")
+;(load "kite_test/execution")
 (load "kite_test/sequential")
 (load "kite_test/maybe")
 (load "kite_test/either")
