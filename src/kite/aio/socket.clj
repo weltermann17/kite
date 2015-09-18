@@ -79,12 +79,12 @@
               (if (== -1 bytesread)
                 (handle-failed p socket-eof-exception b socket)
                 (complete p (success (byte-array-from-buffer b))))))]
-    (on-success-or-failure (->future p) succ fail)
     (.read socket
            b
            timeout TimeUnit/MILLISECONDS
            nil
-           h)))
+           h)
+    (on-success-or-failure (->future p) succ fail)))
 
 ;; write handling
 
@@ -104,11 +104,11 @@
                     (complete p (success [])))
                 (.write socket b timeout TimeUnit/MILLISECONDS a this))
               ))]
-    (on-success-or-failure (->future p) succ fail)
     (.write socket
             b
             timeout TimeUnit/MILLISECONDS
             nil
-            h)))
+            h)
+    (on-success-or-failure (->future p) succ fail)))
 
 ;; eof
