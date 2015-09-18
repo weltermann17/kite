@@ -44,14 +44,14 @@
            (let [recursive-action (from-context :recursive-action)]
              (.fork ^RecursiveAction (recursive-action blocking-f)))
            (.execute ^ForkJoinPool executor ^Runnable blocking-f))
-         (.execute ^ExecutorService executor f))))))
+         (.execute ^ExecutorService executor f)))))
 
-(comment execute-blocking)
+  (comment execute-blocking)
 
-(defn execute-all [fs v]
-  ; ((first fs) v))
-  ; (doseq [f fs] (f v)))
-  (dotimes [i (count fs)] ((nth fs i) v))
-  )
+  (defn execute-all [fs v]
+    ; ((first fs) v))
+    ; (doseq [f fs] (f v)))
+    (dotimes [i (count fs)] ((nth fs i) v))
+    ))
 
 ;; eof
