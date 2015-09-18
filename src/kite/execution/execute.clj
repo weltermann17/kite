@@ -32,7 +32,7 @@
        (.execute ^ExecutorService executor f)))))
 
 (defn execute-blocking
-  "Use this when f is likely to call blocking code."
+  "Use this when f is likely to call blocking code like jdbc or old io."
   ([f v]
    (execute (fn [] (f v))))
   ([f]
@@ -46,9 +46,12 @@
            (.execute ^ForkJoinPool executor ^Runnable blocking-f))
          (.execute ^ExecutorService executor f))))))
 
-(defn execute-all [fs v]
-  ((first fs) v))                                           ; (doseq [f fs] (f v)))
-
 (comment execute-blocking)
+
+(defn execute-all [fs v]
+  ; ((first fs) v))
+  ; (doseq [f fs] (f v)))
+  (dotimes [i (count fs)] ((nth fs i) v))
+  )
 
 ;; eof
