@@ -18,10 +18,7 @@
 (defn- default-single-threaded-thread-factory []
   (m-do [uncaught (asks :single-threaded-uncaught-exception-handler)]
         [:let _ (check-type Thread$UncaughtExceptionHandler uncaught)]
-        [:return (reify
-                   ThreadFactory
-                   (^Thread newThread [_ ^Runnable r]
-                     (configure-thread (Thread. r) uncaught)))]))
+        [:return (default-thread-factory uncaught)]))
 
 (defn- default-single-threaded-executor []
   (m-do [threadfactory (asks :single-threaded-thread-factory)]

@@ -3,7 +3,6 @@
 (import
   (java.util.concurrent
     TimeUnit
-    ThreadFactory
     Executors
     ScheduledExecutorService))
 
@@ -19,11 +18,7 @@
 
 (defn- default-scheduler-thread-factory []
   (m-do [uncaught (asks :scheduler-uncaught-exception-handler)]
-        [:let _ (check-type Thread$UncaughtExceptionHandler uncaught)]
-        [:return (reify
-                   ThreadFactory
-                   (^Thread newThread [_ ^Runnable r]
-                     (configure-thread (Thread. r) uncaught)))]))
+        [:return (default-thread-factory uncaught)]))
 
 (defn- default-scheduler-minimum-size []
   (reader 0))

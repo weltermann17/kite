@@ -4,7 +4,6 @@
   (java.util.concurrent
     ArrayBlockingQueue
     RejectedExecutionHandler
-    ThreadFactory
     ThreadPoolExecutor
     ThreadPoolExecutor$DiscardPolicy
     TimeUnit))
@@ -21,7 +20,7 @@
            (uncaughtException [_ t e] (reporter t e)))]))
 
 (defn- default-threadpool-minimum-size []
-  (reader (* 2 (number-of-cores))))
+  (reader (* 0 (number-of-cores))))
 
 (defn- default-threadpool-maximum-size []
   (reader (* 8 (number-of-cores))))
@@ -32,10 +31,7 @@
 
 (defn- default-threadpool-thread-factory []
   (m-do [uncaught (asks :threadpool-uncaught-exception-handler)]
-        [:return (reify
-                   ThreadFactory
-                   (^Thread newThread [_ ^Runnable r]
-                     (configure-thread (Thread. r) uncaught)))]))
+        [:return (default-thread-factory uncaught)]))
 
 (defn- default-threadpool-blocking-queue-capacity []
   "You don't want this to be much larger than maximum-size, througput would suffer."

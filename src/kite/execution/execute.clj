@@ -5,17 +5,29 @@
     ExecutorService
     ForkJoinPool
     ForkJoinTask
-    RecursiveAction))
+    RecursiveAction
+    ThreadFactory))
 
 ;; common stuff
 
-(defn- configure-thread [^Thread t ^Thread$UncaughtExceptionHandler uncaught]
-  (doto t
-    (.setDaemon true)
-    (.setUncaughtExceptionHandler uncaught)))
-
 (defn- ^Long number-of-cores []
   (.availableProcessors (Runtime/getRuntime)))
+
+(defn- ^ThreadFactory default-thread-factory
+  [^Thread$UncaughtExceptionHandler uncaught]
+  (reify
+    ThreadFactory
+    (^Thread newThread [_ ^Runnable r]
+      (doto (proxy [Thread] [r]
+              (run []
+                (let [^Thread this this
+                      ^ExecutorService executor (from-context :executor)]
+                  (comment this)
+                  (when (= {} (all-context)) (reset-implicit-context executor))
+                  (assert (not= {} (all-context)))
+                  (proxy-super run))))
+        (.setDaemon true)
+        (.setUncaughtExceptionHandler uncaught)))))
 
 ;; the main thing: execute implementations
 

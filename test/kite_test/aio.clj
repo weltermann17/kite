@@ -7,7 +7,7 @@
     (.getBytes ^String r)))
 
 (with-context (-> {}
-                  (add-execution-context {})
+                  (add-execution-context {:executor-policy :threadpool})
                   (add-aio-context {}))
               (let [timeout (from-context :socket-read-write-timeout)]
                 (letfn [(err [prefix ^Throwable e]
