@@ -42,8 +42,9 @@
    (let [executor (from-context :executor)]
      (if (instance? ForkJoinPool executor)
        (if (ForkJoinTask/inForkJoinPool)
-         (let [recursive-action (from-context :recursive-action)]
-           (.fork ^RecursiveAction (recursive-action f)))
+         ;(let [recursive-action (from-context :recursive-action)]
+         ;  (.fork ^RecursiveAction (recursive-action f)))
+         (f)
          (.execute ^ForkJoinPool executor ^Runnable f))
        (.execute ^ExecutorService executor f)))))
 
