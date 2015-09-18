@@ -44,7 +44,7 @@
        (if (ForkJoinTask/inForkJoinPool)
          ;(let [recursive-action (from-context :recursive-action)]
          ;  (.fork ^RecursiveAction (recursive-action f)))
-         (f)
+         (do (error "fork") (f))
          (.execute ^ForkJoinPool executor ^Runnable f))
        (.execute ^ExecutorService executor f)))))
 
