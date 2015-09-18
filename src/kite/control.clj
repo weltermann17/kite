@@ -1,6 +1,6 @@
 (ns kite.control)
 
-(load "control/core")
+(load "control/helper")
 (load "control/equality")
 (load "control/exception")
 (load "control/logging")

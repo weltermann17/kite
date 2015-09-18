@@ -25,10 +25,10 @@
   ([f]
    (let [executor (from-context :executor)]
      (if (instance? ForkJoinPool executor)
-       ;(if (ForkJoinTask/inForkJoinPool)
-       ;  (let [recursive-action (from-context :recursive-action)]
-       ;    (.fork ^RecursiveAction (recursive-action f)))
-       (.execute ^ForkJoinPool executor ^Runnable f)        ;)
+       (if (ForkJoinTask/inForkJoinPool)
+         (let [recursive-action (from-context :recursive-action)]
+           (.fork ^RecursiveAction (recursive-action f)))
+         (.execute ^ForkJoinPool executor ^Runnable f))
        (.execute ^ExecutorService executor f)))))
 
 (defn execute-blocking
@@ -49,9 +49,10 @@
 (comment execute-blocking)
 
 (defn execute-all [fs v]
-  ; ((first fs) v))
-  ; (doseq [f fs] (f v)))
-  (dotimes [i (count fs)] ((nth fs i) v))
-  )
+  "'doseq' is a performance killer, therefore this ugly code."
+  (case (count fs)
+    1 ((first fs) v)
+    2 (do ((first fs) v) (second fs) v)
+    (doseq [f fs] (f v))))
 
 ;; eof

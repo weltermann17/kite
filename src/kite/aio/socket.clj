@@ -39,7 +39,7 @@
 
 (defn close-socket [^AsynchronousSocketChannel socket]
   "Ignore any exception thrown on calling 'close'."
-  (try (.close socket) (catch Throwable _)))
+  (ignore (.close socket)))
 
 (defn configure-socket [^AsynchronousSocketChannel socket]
   (let [config (from-context :config)
