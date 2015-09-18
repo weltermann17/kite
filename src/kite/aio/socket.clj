@@ -61,6 +61,12 @@
   (when p (when-not (or (instance? ClosedChannelException e) (= "Connection reset by peer" (.getMessage e)))
             (complete p (failure e)))))
 
+(defn- fast-handle-failed [^Throwable e ^ByteBuffer b ^AsynchronousSocketChannel socket fail]
+  (release-buffer b)
+  (close-socket socket)
+  (when-not (or (instance? ClosedChannelException e) (= "Connection reset by peer" (.getMessage e)))
+    (fail e)))
+
 (def ^:constant socket-eof-exception
   (EOFException. "AsynchronousSocketChannel.read returned -1"))
 
@@ -86,6 +92,25 @@
            nil
            h)))
 
+(defn fast-read-socket [^AsynchronousSocketChannel socket
+                        ^Long timeout
+                        succ
+                        fail]
+  "This version is not using futures, but calls succ/fail directly on completion."
+  (let [b (acquire-buffer)
+        h (reify CompletionHandler
+            (^void failed [_ ^Throwable e _]
+              (fast-handle-failed e b socket fail))
+            (^void completed [_ bytesread _]
+              (if (== -1 bytesread)
+                (fast-handle-failed socket-eof-exception b socket fail)
+                (succ (byte-array-from-buffer b)))))]
+    (.read socket
+           b
+           timeout TimeUnit/MILLISECONDS
+           nil
+           h)))
+
 ;; write handling
 
 (defn write-socket [^AsynchronousSocketChannel socket
@@ -105,6 +130,27 @@
                 (.write socket b timeout TimeUnit/MILLISECONDS a this))
               ))]
     (on-success-or-failure (->future p) succ fail)
+    (.write socket
+            b
+            timeout TimeUnit/MILLISECONDS
+            nil
+            h)))
+
+(defn fast-write-socket [^AsynchronousSocketChannel socket
+                         ^bytes bytes
+                         ^Long timeout
+                         succ
+                         fail]
+  (let [b (byte-buffer-from-array bytes)
+        h (reify CompletionHandler
+            (^void failed [_ ^Throwable e _]
+              (fast-handle-failed e b socket fail))
+            (^void completed [this _ a]
+              (if (== 0 (.remaining b))
+                (do (release-buffer b)
+                    (succ []))
+                (.write socket b timeout TimeUnit/MILLISECONDS a this))
+              ))]
     (.write socket
             b
             timeout TimeUnit/MILLISECONDS

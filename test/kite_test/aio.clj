@@ -22,16 +22,16 @@
                                 (fn [socket]
                                   ;(configure-socket socket)
                                   (letfn [(write-h [_]
-                                                   (read-socket socket
-                                                                timeout
-                                                                read-h
-                                                                read-e))
+                                                   (fast-read-socket socket
+                                                                     timeout
+                                                                     read-h
+                                                                     read-e))
                                           (read-h [^bytes _]
-                                                  (write-socket socket
-                                                                response
-                                                                timeout
-                                                                write-h
-                                                                write-e))]
+                                                  (fast-write-socket socket
+                                                                     response
+                                                                     timeout
+                                                                     write-h
+                                                                     write-e))]
                                     (write-h [])))
                                 (mk-err :accept))
                         (info server)))

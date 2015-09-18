@@ -30,6 +30,7 @@
 
 (defn ^ByteBuffer acquire-buffer []
   (let [pool (from-context :byte-buffer-pool)]
+    (when (nil? pool) (error "pool nil" (Thread/currentThread) (all-context)))
     (loop []
       (let [[^ByteBuffer head & rest :as all] @pool]
         (if head
@@ -40,7 +41,7 @@
         ))))
 
 (defn ^bytes byte-array-from-buffer [^ByteBuffer buffer]
-  "Converts buffer content to a byte-array and releases the buffer back to the pool."
+  "Converts buffer content to a byte-array and then releases the buffer back to the pool."
   (let [a (byte-array (.remaining (.flip buffer)))]
     (.get buffer a)
     (release-buffer buffer)
