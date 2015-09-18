@@ -50,9 +50,11 @@
 
 (defn execute-all [fs v]
   "'doseq' is a performance killer, therefore this ugly code."
-  (case (count fs)
-    1 ((first fs) v)
-    2 (do ((first fs) v) (second fs) v)
-    (doseq [f fs] (f v))))
+  (let [c (count fs)]
+    (if (== 2 c)
+      (do ((first fs) v) (second fs) v)
+      (if (== 1 c)
+        ((first fs) v)
+        (doseq [f fs] (f v))))))
 
 ;; eof
