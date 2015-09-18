@@ -31,10 +31,12 @@
   (reader (reify ForkJoinPool$ForkJoinWorkerThreadFactory
             (^ForkJoinWorkerThread newThread [_ ^ForkJoinPool p]
               (proxy [ForkJoinWorkerThread] [p]
-                (onStart []
-                  (when (= {} (all-context)) (reset-implicit-context p))
-                  (assert (not= {} (all-context)))
-                  (proxy-super onStart)))))))
+                (run []
+                  (let [^ForkJoinWorkerThread this this]
+                    (comment this)
+                    (when (= {} (all-context)) (reset-implicit-context p))
+                    (assert (not= {} (all-context)))
+                    (proxy-super run))))))))
 
 (defn- default-forkjoin-async-mode []
   (reader true))
