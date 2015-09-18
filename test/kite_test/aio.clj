@@ -7,7 +7,7 @@
     (.getBytes ^String r)))
 
 (with-context (-> {}
-                  (add-execution-context {:executor-policy :single-threaded})
+                  (add-execution-context {})
                   (add-aio-context {}))
               (error (from-context :executor))
               (let [timeout (from-context :socket-read-write-timeout)]
