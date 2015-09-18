@@ -18,22 +18,23 @@
                     (fn [server]
                       (let [read-e (mk-err :read)
                             write-e (mk-err :write)]
-                        (accept server
-                                (fn [socket]
-                                  ;(configure-socket socket)
-                                  (letfn [(write-h [_]
-                                                   (fast-read-socket socket
-                                                                     timeout
-                                                                     read-h
-                                                                     read-e))
-                                          (read-h [^bytes _]
-                                                  (fast-write-socket socket
-                                                                     response
-                                                                     timeout
-                                                                     write-h
-                                                                     write-e))]
-                                    (write-h [])))
-                                (mk-err :accept))
+                        (fast-accept
+                          server
+                          (fn [socket]
+                            (configure-socket socket)
+                            (letfn [(write-h [_]
+                                             (fast-read-socket socket
+                                                               timeout
+                                                               read-h
+                                                               read-e))
+                                    (read-h [^bytes _]
+                                            (fast-write-socket socket
+                                                               response
+                                                               timeout
+                                                               write-h
+                                                               write-e))]
+                              (write-h [])))
+                          (mk-err :accept))
                         (info server)))
                     (mk-err :server)))
                 (await-channel-group-termination (from-context :channel-group) 120000)

@@ -42,4 +42,16 @@
     (on-success-or-failure (->future p) succ fail)
     (.accept server nil h)))
 
+(defn fast-accept [^AsynchronousServerSocketChannel server succ fail]
+  (let [h (letfn [(handle [f v]
+                          (f v)
+                          (accept server succ fail))]
+            (reify CompletionHandler
+              (^void failed [_ ^Throwable e _]
+                (when-not (instance? AsynchronousCloseException e)
+                  (handle fail e)))
+              (^void completed [_ socket _]
+                (handle succ socket))))]
+    (.accept server nil h)))
+
 ;; eof
