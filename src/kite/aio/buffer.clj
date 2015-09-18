@@ -25,10 +25,12 @@
   (ByteBuffer/allocateDirect (from-context :byte-buffer-size)))
 
 (defn release-buffer [^ByteBuffer buffer]
+  "Clears the buffer and releases it back to the pool."
   (let [pool (from-context :byte-buffer-pool)]
-    (swap! pool conj (.clear buffer))))
+    (swap! pool conj (.clear buffer)) nil))
 
 (defn ^ByteBuffer acquire-buffer []
+  "Returns a cleared buffer either from the pool or if the pool is empty a newly created one."
   (let [pool (from-context :byte-buffer-pool)]
     (loop []
       (let [[^ByteBuffer head & rest :as all] @pool]
@@ -40,7 +42,7 @@
         ))))
 
 (defn ^bytes byte-array-from-buffer [^ByteBuffer buffer]
-  "Converts buffer content to a byte-array and then releases the buffer back to the pool."
+  "Converts buffer content to a byte-array and releases the buffer back to the pool."
   (let [a (byte-array (.remaining (.flip buffer)))]
     (.get buffer a)
     (release-buffer buffer)

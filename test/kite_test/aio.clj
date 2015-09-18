@@ -9,36 +9,32 @@
 (with-context (-> {}
                   (add-execution-context {})
                   (add-aio-context {}))
-              (error (from-context :executor))
-              (let [timeout (from-context :socket-read-write-timeout)]
-                (letfn [(err [prefix ^Throwable e]
-                             (when-not (= socket-eof-exception e) (error prefix (type e) (.getMessage e) e)))
-                        (mk-err [prefix] (partial err prefix))]
-                  (socket-server
-                    3001
-                    (fn [server]
-                      (let [read-e (mk-err :read)
-                            write-e (mk-err :write)]
-                        (fast-accept
-                          server
-                          (fn [socket]
-                            (configure-socket socket)
-                            (letfn [(write-h [_]
-                                             (fast-read-socket socket
-                                                               timeout
-                                                               read-h
-                                                               read-e))
-                                    (read-h [^bytes _]
-                                            (fast-write-socket socket
-                                                               response
-                                                               timeout
-                                                               write-h
-                                                               write-e))]
-                              (write-h [])))
-                          (mk-err :accept))
-                        (info server)))
-                    (mk-err :server)))
-                (await-channel-group-termination (from-context :channel-group) 120000)
-                (shutdown-channel-group (from-context :channel-group))))
+              (let [timeout (from-context :socket-read-write-timeout)
+                    err (fn [prefix ^Throwable e] (when-not (= socket-eof-exception e) (error prefix (type e) (.getMessage e) e)))
+                    mk-err (fn [prefix] (partial err prefix))]
+                (socket-server
+                  3001
+                  (fn [server]
+                    (let [read-e (mk-err :read)
+                          write-e (mk-err :write)]
+                      (accept
+                        server
+                        (fn [socket]
+                          (configure-socket socket)
+                          (letfn [(write-h [_] (read-socket socket
+                                                            timeout
+                                                            read-h
+                                                            read-e))
+                                  (read-h [_] (write-socket socket
+                                                            response
+                                                            timeout
+                                                            write-h
+                                                            write-e))]
+                            (write-h [])))
+                        (mk-err :accept))
+                      (info server)))
+                  (mk-err :server)))
+              (await-channel-group-termination (from-context :channel-group) 120000)
+              (shutdown-channel-group (from-context :channel-group)))
 
 ;; eof
