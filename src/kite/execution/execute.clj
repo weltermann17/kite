@@ -70,7 +70,7 @@
   "'doseq' is a performance killer, therefore this ugly code."
   (let [c (count fs)]
     (if (== 2 c)
-      (do (execute (first fs) v) (execute (second fs) v))
+      (do ((first fs) v) ((second fs) v))
       (if (== 1 c)
         (execute (first fs) v)
         (doseq [f fs] execute f v)))))
