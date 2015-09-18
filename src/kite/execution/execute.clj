@@ -13,21 +13,25 @@
 (defn- ^Long number-of-cores []
   (.availableProcessors (Runtime/getRuntime)))
 
+(defprotocol WithExecutor
+  (set-executor [_ executor]))
+
 (defn- ^ThreadFactory default-thread-factory
   [^Thread$UncaughtExceptionHandler uncaught]
-  (reify
-    ThreadFactory
-    (^Thread newThread [_ ^Runnable r]
-      (doto (proxy [Thread] [r]
-              (run []
-                (let [^Thread this this
-                      ^ExecutorService executor (from-context :executor)]
-                  (comment this)
-                  (when (= {} (all-context)) (reset-implicit-context executor))
-                  (assert (not= {} (all-context)))
-                  (proxy-super run))))
-        (.setDaemon true)
-        (.setUncaughtExceptionHandler uncaught)))))
+  (let [executor (atom [])]
+    (reify
+      ThreadFactory WithExecutor
+      (set-executor [_ e] (reset! executor e))
+      (^Thread newThread [_ ^Runnable r]
+        (doto (proxy [Thread] [r]
+                (run []
+                  (let [^Thread this this]
+                    (comment this)
+                    (when (= {} (all-context)) (reset-implicit-context @executor))
+                    (assert (not= {} (all-context)))
+                    (proxy-super run))))
+          (.setDaemon true)
+          (.setUncaughtExceptionHandler uncaught))))))
 
 ;; the main thing: execute implementations
 

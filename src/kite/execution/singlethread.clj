@@ -25,6 +25,7 @@
         [:let
          _ (check-type ThreadFactory threadfactory)]
         [:return
-         (fn [] (Executors/newSingleThreadExecutor threadfactory))]))
+         (fn [] (set-executor threadfactory
+                              (Executors/newSingleThreadExecutor threadfactory)))]))
 
 ;; eof

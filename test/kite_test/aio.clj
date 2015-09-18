@@ -7,8 +7,9 @@
     (.getBytes ^String r)))
 
 (with-context (-> {}
-                  (add-execution-context {:executor-policy :threadpool})
+                  (add-execution-context {:executor-policy :single-threaded})
                   (add-aio-context {}))
+              (error (from-context :executor))
               (let [timeout (from-context :socket-read-write-timeout)]
                 (letfn [(err [prefix ^Throwable e]
                              (when-not (= socket-eof-exception e) (error prefix (type e) (.getMessage e) e)))

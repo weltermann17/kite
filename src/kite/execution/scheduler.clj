@@ -31,7 +31,8 @@
          _ (check-cond (>= mn 0))
          _ (check-type ThreadFactory threadfactory)]
         [:return
-         (fn [] (Executors/newScheduledThreadPool mn threadfactory))]))
+         (fn [] (set-executor threadfactory
+                              (Executors/newScheduledThreadPool mn threadfactory)))]))
 
 ;; fn
 

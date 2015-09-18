@@ -20,7 +20,7 @@
            (uncaughtException [_ t e] (reporter t e)))]))
 
 (defn- default-threadpool-minimum-size []
-  (reader (* 0 (number-of-cores))))
+  (reader (* 1 (number-of-cores))))
 
 (defn- default-threadpool-maximum-size []
   (reader (* 8 (number-of-cores))))
@@ -69,12 +69,13 @@
          _ (check-type ThreadFactory threadfactory)
          _ (check-type RejectedExecutionHandler rejection)]
         [:return
-         (fn [] (ThreadPoolExecutor.
-                  mn
-                  mx
-                  keepalive TimeUnit/MILLISECONDS
-                  queue
-                  threadfactory
-                  rejection))]))
+         (fn [] (set-executor threadfactory
+                              (ThreadPoolExecutor.
+                                mn
+                                mx
+                                keepalive TimeUnit/MILLISECONDS
+                                queue
+                                threadfactory
+                                rejection)))]))
 
 ;; eof
