@@ -8,7 +8,7 @@
 
 (declare immediate failed-only)
 
-(defn- mk-future [value callbacks]
+(defn- mk-future [value succ-callbacks fail-callbacks]
   (reify
     Future
     (await [this milliseconds]
@@ -29,13 +29,21 @@
     (on-complete [this f]
       (let [v @value]
         (if (= v not-yet-completed)
-          (swap! callbacks conj f)
+          (do (conj! succ-callbacks f) (conj! fail-callbacks f))
           (execute f v)))
       this)
     (on-success [this f]
-      (on-complete this (fn [a] (when (success? a) (f @a)))))
+      (let [v @value]
+        (if (= v not-yet-completed)
+          (conj! succ-callbacks (fn [a] (f @a)))
+          (when (success? v) (execute f @v))))
+      this)
     (on-failure [this f]
-      (on-complete this (fn [a] (when (failure? a) (f @a)))))
+      (let [v @value]
+        (if (= v not-yet-completed)
+          (conj! fail-callbacks (fn [a] (f @a)))
+          (when (failure? v) (execute f @v))))
+      this)
 
     IDeref
     (deref [_] @value)
@@ -69,7 +77,8 @@
   'succ' is surrounded by a try/catch that will call 'fail' in case
   of an exception that escapes the scope of 'succ'. Returns 'f'."
   (on-success f (fn [v] (try (succ v) (catch Throwable e (fail e)))))
-  (on-failure f fail))
+  (on-failure f fail)
+  )
 
 (defn immediate [v]
   "Will always return a Success, v must not throw an exception.

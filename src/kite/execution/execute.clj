@@ -14,7 +14,7 @@
   (.availableProcessors (Runtime/getRuntime)))
 
 (defprotocol WithExecutor
-  (set-executor [_ executor]))
+  (^ExecutorService set-executor [_ ^ExecutorService executor]))
 
 (defn- ^ThreadFactory default-thread-factory
   [^Thread$UncaughtExceptionHandler uncaught]
@@ -39,18 +39,16 @@
   ([f v]
    (execute (fn [] (f v))))
   ([f]
-   (f)
-   (comment (let [executor (from-context :executor)]
-              (if (instance? ForkJoinPool executor)
-                (if (ForkJoinTask/inForkJoinPool)
-                  ;(let [recursive-action (from-context :recursive-action)]
-                  ;  (.fork ^RecursiveAction (recursive-action f)))
-                  (do (error "fork") (f))
-                  (.execute ^ForkJoinPool executor ^Runnable f))
-                (.execute ^ExecutorService executor f))))))
+   (let [executor (from-context :executor)]
+     (if (instance? ForkJoinPool executor)
+       (if (ForkJoinTask/inForkJoinPool)
+         (let [recursive-action (from-context :recursive-action)]
+           (.fork ^RecursiveAction (recursive-action f)))
+         (.execute ^ForkJoinPool executor ^Runnable f))
+       (.execute ^ExecutorService executor f)))))
 
 (defn execute-blocking
-  "Use this when f is likely to call blocking code like jdbc or old io."
+  "Use this when f is likely to call blocking code like standard jdbc or basic io."
   ([f v]
    (execute (fn [] (f v))))
   ([f]
@@ -64,15 +62,12 @@
            (.execute ^ForkJoinPool executor ^Runnable blocking-f))
          (.execute ^ExecutorService executor f))))))
 
-(comment execute-blocking)
-
 (defn execute-all [fs v]
-  "'doseq' is a performance killer, therefore this ugly code."
-  (let [c (count fs)]
-    (if (== 2 c)
-      (do ((first fs) v) ((second fs) v))
-      (if (== 1 c)
-        (execute (first fs) v)
-        (doseq [f fs] execute f v)))))
+  "It's actually not 'doseq' that is a performance killer,
+  but a call to more than only one 'execute's."
+  (case (count fs)
+    1 (execute (first fs) v)
+    2 (do (execute (first fs) v) (execute (second fs) v))
+    (doseq [f fs] (execute f v))))
 
 ;; eof

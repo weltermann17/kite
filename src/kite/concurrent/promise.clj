@@ -11,7 +11,7 @@
     Timeout in milliseconds must be > 0.")
   (on-complete [_ f]
     "Adds a callback executed on completion or calls it directly if already completed.
-     'f' must expect a Result.")
+     Unlike as with 'on-success/failure' 'f' must expect a Result not a value.")
   (on-success [_ f]
     "Adds a callback executed only on success. 'f' must expect the value inside the Success.")
   (on-failure [_ f]
@@ -19,7 +19,7 @@
 
 (defprotocol Promise
   (complete [_ v]
-    "Set the value and execute all callbacks. Throws illegal-state! if called more than once.")
+    "Sets the value and executes all callbacks. Throws illegal-state! if called more than once.")
   (^Future ->future [_]
     "Returns its corresponding future."))
 
@@ -31,13 +31,17 @@
 
 (defn promise []
   (let [value (atom not-yet-completed)
-        callbacks (atom [])
-        future (mk-future value callbacks)]
+        succ-callbacks (transient [])
+        fail-callbacks (transient [])
+        future (mk-future value succ-callbacks fail-callbacks)]
     (reify
       Promise
       (complete [this v]
         (if (compare-and-set! value not-yet-completed v)
-          (execute-all @callbacks v)
+          (execute-all (if (success? v)
+                         (persistent! succ-callbacks)
+                         (persistent! fail-callbacks))
+                       v)
           (illegal-state! (<< "A promise cannot be completed more than once, value already set = ~{@value}, value not accepted = ~{v}")))
         this)
       (->future [_] future)
