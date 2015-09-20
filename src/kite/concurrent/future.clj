@@ -77,8 +77,7 @@
   'succ' is surrounded by a try/catch that will call 'fail' in case
   of an exception that escapes the scope of 'succ'. Returns 'f'."
   (on-success f (fn [v] (try (succ v) (catch Throwable e (fail e)))))
-  (on-failure f fail)
-  )
+  (on-failure f fail))
 
 (defn immediate [v]
   "Will always return a Success, v must not throw an exception.

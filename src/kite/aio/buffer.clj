@@ -27,7 +27,7 @@
 (defn release-buffer [^ByteBuffer buffer]
   "Clears the buffer and releases it back to the pool."
   (let [pool (from-context :byte-buffer-pool)]
-    (swap! pool conj (.clear buffer)) nil))
+    (swap! pool conj (.clear buffer))))
 
 (defn ^ByteBuffer acquire-buffer []
   "Returns a cleared buffer either from the pool or if the pool is empty a newly created one."
@@ -44,9 +44,7 @@
 (defn ^bytes byte-array-from-buffer [^ByteBuffer buffer]
   "Converts buffer content to a byte-array and releases the buffer back to the pool."
   (let [a (byte-array (.remaining (.flip buffer)))]
-    (.get buffer a)
-    (release-buffer buffer)
-    a))
+    (release-buffer (.get buffer a)) a))
 
 (defn ^ByteBuffer byte-buffer-from-array [^bytes a]
   "Acquires a buffer from the pool and fills it with 'a'."

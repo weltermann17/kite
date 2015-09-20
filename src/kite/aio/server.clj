@@ -38,7 +38,7 @@
                 (when-not (instance? AsynchronousCloseException e)
                   (handle (failure e))))
               (^void completed [_ socket _]
-                (handle (success socket)))))]
+                (handle (success (configure-socket socket))))))]
     (on-success-or-failure (->future p) succ fail)
     (.accept server nil h)))
 
@@ -51,9 +51,7 @@
                 (when-not (instance? AsynchronousCloseException e)
                   (handle fail e)))
               (^void completed [_ socket _]
-                (handle succ socket))))]
+                (handle succ (configure-socket socket)))))]
     (.accept server nil h)))
-
-(comment accept)
 
 ;; eof
