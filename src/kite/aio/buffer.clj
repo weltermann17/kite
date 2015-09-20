@@ -50,4 +50,36 @@
   "Acquires a buffer from the pool and fills it with 'a'."
   (doto (acquire-buffer) (.put a) (.flip)))
 
+(defn- byte-array-compute-failure [^bytes pattern]
+  "Very much 'java-style'."
+  (let [n (count pattern) failure (long-array n)]
+    (loop [i 1]
+      (if (< i n)
+        (let [j (loop [j 0]
+                  (if (and (> j 0) (not= (aget pattern j) (aget pattern i)))
+                    (recur (aget failure (- j 1))) j))]
+          (aset-long failure i
+                     (if (= (aget pattern j) (aget pattern i)) (inc j) j))
+          (recur (inc i)))
+        failure))))
+
+(defn ^Long byte-array-index-of
+  ([^bytes array ^bytes pattern]
+   (byte-array-index-of array pattern 0))
+  ([^bytes array ^bytes pattern ^Long from]
+   (byte-array-index-of array pattern from (count array)))
+  ([^bytes array ^bytes pattern ^Long from ^Long to]
+   (let [p (count pattern)
+         ^longs failure (byte-array-compute-failure pattern)]
+     (loop [i from k 0]
+       (if (< i to)
+         (let [j (loop [j k]
+                   (if (and (> j 0) (not= (aget pattern j) (aget array i)))
+                     (recur (aget failure (- j 1)))
+                     (if (= (aget pattern j) (aget array i)) (inc j) j)))]
+           (if (= j p)
+             (inc (- i p))
+             (recur (inc i) (long j))))
+         -1)))))
+
 ;; eof
