@@ -28,8 +28,6 @@
 
 (def ^:private ^bytes end-of-header (.getBytes "\r\n\r\n"))
 
-(info "eoh" (vec end-of-header))
-
 (def ^:private ctx
   (-> {}
       (add-execution-context {})
@@ -37,31 +35,33 @@
 
 (def port 3001)
 
-(expect nil (with-context
-              ctx
-              (socket-server
-                port
-                (fn [server]
-                  (accept
-                    server
-                    (fn [socket]
-                      (letfn [(write-h [_]
-                                       (read-socket socket
-                                                    read-h
-                                                    read-e))
-                              (read-h [^bytes b]
-                                      ;(byte-array-index-of b end-of-header)
-                                      (info (.indexOf (String. b) "\r\n\r\n"))
-                                      (write-socket socket
-                                                    response
-                                                    write-h
-                                                    write-e))]
-                        (write-h nil-bytes)))
-                    (mk-err :accept))
-                  (info server))
-                (mk-err :server))
-              (await-channel-group-termination (from-context :channel-group) 119000)
-              (shutdown-channel-group (from-context :channel-group) 1000))
-        )
+(expect
+  nil
+  (with-context
+    ctx
+    (socket-server
+      port
+      (fn [server]
+        (accept
+          server
+          (fn [socket]
+            (letfn [(write-h [_]
+                             (read-socket socket
+                                          read-h
+                                          read-e))
+                    (read-h [^bytes b]
+                            (byte-array-index-of b end-of-header)
+                            (.indexOf (String. b) "\r\n\r\n")
+                            (write-socket socket
+                                          response
+                                          write-h
+                                          write-e))]
+              (write-h nil-bytes)))
+          (mk-err :accept))
+        (info server))
+      (mk-err :server))
+    (await-channel-group-termination (from-context :channel-group) 119000)
+    (shutdown-channel-group (from-context :channel-group) 1000))
+  )
 
 ;; eof

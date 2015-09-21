@@ -83,7 +83,7 @@
             (^void failed [_ ^Throwable e _]
               (handle-failed p e b socket))
             (^void completed [_ bytesread _]
-              (when (== -1 bytesread) (close-socket socket))
+              (when (= -1 bytesread) (close-socket socket))
               (complete p (success (byte-array-from-buffer b)))))]
     (on-success-or-failure f succ fail)
     (.read socket
@@ -103,7 +103,7 @@
             (^void failed [_ ^Throwable e _]
               (fast-handle-failed e b socket fail))
             (^void completed [_ bytesread _]
-              (when (== -1 bytesread) (close-socket socket))
+              (when (= -1 bytesread) (close-socket socket))
               (succ (byte-array-from-buffer b))))]
     (.read socket
            b
@@ -125,7 +125,7 @@
             (^void failed [_ ^Throwable e _]
               (handle-failed p e b socket))
             (^void completed [this _ _]
-              (if (== 0 (.remaining b))
+              (if (= 0 (.remaining b))
                 (do (release-buffer b) (complete p (success bytes)))
                 (.write socket b t TimeUnit/MILLISECONDS nil this))
               ))]
@@ -147,7 +147,7 @@
             (^void failed [_ ^Throwable e _]
               (fast-handle-failed e b socket fail))
             (^void completed [this _ _]
-              (if (== 0 (.remaining b))
+              (if (= 0 (.remaining b))
                 (do (release-buffer b) (succ bytes))
                 (.write socket b t TimeUnit/MILLISECONDS nil this))
               ))]
