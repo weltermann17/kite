@@ -1,5 +1,7 @@
 (in-ns 'kite-test)
 
+(import [kite.aio ByteString])
+
 (expect 0 (byte-array-index-of (.getBytes "aaaaa") (.getBytes "a")))
 (expect 0 (byte-array-index-of (.getBytes "aaaaa") (.getBytes "aa")))
 (expect 1 (byte-array-index-of (.getBytes "baaaa") (.getBytes "a")))
@@ -9,11 +11,11 @@
 (expect -1 (byte-array-index-of (.getBytes "aaaaabbaaa") (.getBytes "aaa") 4 9))
 (expect 7 (byte-array-index-of (.getBytes "aaaaabbaaa") (.getBytes "aaa") 4 10))
 
-(def ^:private ^:constant response
+(def ^:private ^:constant ^ByteString response
   (let [c 48
         s "HTTP/1.1 200 OK\nConnection: keep-alive\nContent-Type: text/plain\nContent-Length: 4\nDate: Wed, 11 Mar 2015 13:13:24 GMT\n\npong"
         r (reduce str (repeat c s))]
-    (.getBytes ^String r)))
+    (byte-string (.getBytes ^String r))))
 
 (defn- err [prefix ^Throwable e]
   (when-not (harmless-socket-exception? e) (error prefix (type e) (.getMessage e) e)))
@@ -24,16 +26,12 @@
 
 (def ^:private write-e (mk-err :write))
 
-(def ^:private ^bytes nil-bytes (byte-array 0))
-
-(def ^:private ^bytes end-of-header (.getBytes "\r\n\r\n"))
-
 (def ^:private ctx
   (-> {}
       (add-execution-context {})
       (add-aio-context {})))
 
-(def port 3001)
+(def ^:private port 3001)
 
 (expect
   nil
@@ -49,9 +47,8 @@
                              (read-socket socket
                                           read-h
                                           read-e))
-                    (read-h [^bytes b]
-                            (byte-array-index-of b end-of-header)
-                            (.indexOf (String. b) "\r\n\r\n")
+                    (read-h [^ByteString b]
+                            (info (into {} (for [[k v] (parse-request b)] [k (->string v)])))
                             (write-socket socket
                                           response
                                           write-h

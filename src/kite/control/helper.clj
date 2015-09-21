@@ -18,6 +18,11 @@
   "Use this if it is save to ignore any exception thrown by 'body'."
   `(try ~@body (catch Throwable _#)))
 
-(comment pretty)
+(def ^:constant ^bytes nil-bytes (byte-array 0))
+
+(def ^:constant ^ints nil-ints (int-array 0))
+
+(def ^:constant ^longs nil-longs (long-array 0))
+
 
 ;; eof

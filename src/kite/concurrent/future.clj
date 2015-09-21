@@ -51,7 +51,7 @@
     Object
     (equals [this o] (test-eq this o Future #(= @value @o)))
     (hashCode [_] (hash @value))
-    (toString [_] (<< "Future  ~{@value}"))
+    (toString [_] (<< "(Future  ~{@value})"))
 
     Functor
     (-fmap [this f]

@@ -6,7 +6,8 @@
   [java.nio.channels
    AsynchronousSocketChannel
    ClosedChannelException
-   CompletionHandler]
+   CompletionHandler
+   InterruptedByTimeoutException]
   [java.util.concurrent
    TimeUnit])
 
@@ -66,6 +67,7 @@
 (defn harmless-socket-exception? [^Throwable e]
   (or
     (instance? ClosedChannelException e)
+    (instance? InterruptedByTimeoutException e)
     (= "Connection reset by peer" (.getMessage e))))
 
 ;; read handling
@@ -84,7 +86,7 @@
               (handle-failed p e b socket))
             (^void completed [_ bytesread _]
               (when (= -1 bytesread) (close-socket socket))
-              (complete p (success (byte-array-from-buffer b)))))]
+              (complete p (success (byte-string-from-buffer b)))))]
     (on-success-or-failure f succ fail)
     (.read socket
            b
@@ -104,7 +106,7 @@
               (fast-handle-failed e b socket fail))
             (^void completed [_ bytesread _]
               (when (= -1 bytesread) (close-socket socket))
-              (succ (byte-array-from-buffer b))))]
+              (succ (byte-string-from-buffer b))))]
     (.read socket
            b
            t TimeUnit/MILLISECONDS
@@ -114,19 +116,19 @@
 ;; write handling
 
 (defn write-socket [^AsynchronousSocketChannel socket
-                    ^bytes bytes
+                    ^ByteString s
                     succ
                     fail]
   (let [p (promise)
         f (->future p)
-        b (byte-buffer-from-array bytes)
+        b (byte-buffer-from-string s)
         t (from-context :socket-read-write-timeout)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
               (handle-failed p e b socket))
             (^void completed [this _ _]
               (if (= 0 (.remaining b))
-                (do (release-buffer b) (complete p (success bytes)))
+                (do (release-buffer b) (complete p (success s)))
                 (.write socket b t TimeUnit/MILLISECONDS nil this))
               ))]
     (on-success-or-failure f succ fail)
@@ -138,17 +140,17 @@
     f))
 
 (defn fast-write-socket [^AsynchronousSocketChannel socket
-                         ^bytes bytes
+                         ^ByteString s
                          succ
                          fail]
-  (let [b (byte-buffer-from-array bytes)
+  (let [b (byte-buffer-from-string s)
         t (from-context :socket-read-write-timeout)
         h (reify CompletionHandler
             (^void failed [_ ^Throwable e _]
               (fast-handle-failed e b socket fail))
             (^void completed [this _ _]
               (if (= 0 (.remaining b))
-                (do (release-buffer b) (succ bytes))
+                (do (release-buffer b) (succ s))
                 (.write socket b t TimeUnit/MILLISECONDS nil this))
               ))]
     (.write socket

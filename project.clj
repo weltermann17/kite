@@ -27,7 +27,6 @@
 
                  ;; helpers
                  [superstring "2.1.0"]
-                 ; [clojurewerkz/buffy "1.0.2"]
                  ]
   :source-paths ["src"]
   :target-path "target/")

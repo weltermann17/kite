@@ -41,14 +41,17 @@
           (mk-buffer))
         ))))
 
-(defn ^bytes byte-array-from-buffer [^ByteBuffer buffer]
+;; utilities
+
+(defn ^ByteString byte-string-from-buffer [^ByteBuffer buffer]
   "Converts buffer content to a byte-array and releases the buffer back to the pool."
   (let [a (byte-array (.remaining (.flip buffer)))]
-    (release-buffer (.get buffer a)) a))
+    (release-buffer (.get buffer a))
+    (byte-string a)))
 
-(defn ^ByteBuffer byte-buffer-from-array [^bytes a]
-  "Acquires a buffer from the pool and fills it with 'a'."
-  (doto (acquire-buffer) (.put a) (.flip)))
+(defn ^ByteBuffer byte-buffer-from-string [^ByteString b]
+  "Acquires a buffer from the pool and fills it with 'b'. Assumes (but does not assert) that 'capacity' > 'count b'."
+  (doto (acquire-buffer) (.put ^bytes (.array b)) (.flip)))
 
 (defn- byte-array-compute-failure [^bytes pattern]
   "Very much 'java-style'."
@@ -63,12 +66,12 @@
           (recur (inc i)))
         failure))))
 
-(defn ^Long byte-array-index-of
+(defn ^long byte-array-index-of
   ([^bytes array ^bytes pattern]
    (byte-array-index-of array pattern 0))
-  ([^bytes array ^bytes pattern ^Long from]
+  ([^bytes array ^bytes pattern ^long from]
    (byte-array-index-of array pattern from (count array)))
-  ([^bytes array ^bytes pattern ^Long from ^Long to]
+  ([^bytes array ^bytes pattern ^long from ^long to]
    (let [p (count pattern)
          ^longs failure (byte-array-compute-failure pattern)]
      (loop [i from k 0]
@@ -81,5 +84,8 @@
              (inc (- i p))
              (recur (inc i) (long j))))
          -1)))))
+
+(defn ^long byte-string-index-of [^ByteString b ^bytes pattern]
+  (byte-array-index-of ^bytes (.array b) pattern ^long (.from b) ^long (.to b)))
 
 ;; eof

@@ -52,6 +52,6 @@
       Object
       (equals [this o] (test-eq this o Promise #(= @value @o)))
       (hashCode [_] (hash @value))
-      (toString [_] (<< "Promise ~{@value}")))))
+      (toString [_] (<< "(Promise ~{@value})")))))
 
 ;; eof
