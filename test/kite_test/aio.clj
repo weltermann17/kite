@@ -48,7 +48,7 @@
                                           read-h
                                           read-e))
                     (read-h [^ByteString b]
-                            (info (into {} (for [[k v] (parse-request b)] [k (->string v)])))
+                            (parse-request b)
                             (write-socket socket
                                           response
                                           write-h
@@ -57,7 +57,7 @@
           (mk-err :accept))
         (info server))
       (mk-err :server))
-    (await-channel-group-termination (from-context :channel-group) 119000)
+    (await-channel-group-termination (from-context :channel-group) 1000)
     (shutdown-channel-group (from-context :channel-group) 1000))
   )
 

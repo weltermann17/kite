@@ -30,7 +30,7 @@
 
 (defn- parse-header [^ByteString in]
   (let [[k v] (take-until in colon-delimiter)]
-    [(keyword (lower-case (->string k))) v]))
+    [k v]))
 
 (defn parse-request [^ByteString b]
   (let [[req remainder] (take-until b end-of-headers)
