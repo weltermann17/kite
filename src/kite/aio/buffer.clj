@@ -21,7 +21,7 @@
          (fn [] (atom (doall (for [_ (range poolsize)]
                                (ByteBuffer/allocateDirect buffersize)))))]))
 
-(defn- ^ByteBuffer mk-buffer []
+(defn- mk-buffer ^ByteBuffer []
   (ByteBuffer/allocateDirect (from-context :byte-buffer-size)))
 
 (defn release-buffer [^ByteBuffer buffer]
@@ -29,7 +29,7 @@
   (let [pool (from-context :byte-buffer-pool)]
     (swap! pool conj (.clear buffer))))
 
-(defn ^ByteBuffer acquire-buffer []
+(defn acquire-buffer ^ByteBuffer []
   "Returns a cleared buffer either from the pool or if the pool is empty a newly created one."
   (let [pool (from-context :byte-buffer-pool)]
     (loop []
@@ -43,46 +43,43 @@
 
 ;; utilities
 
-(defn ^ByteString byte-string-from-buffer [^ByteBuffer buffer]
+(defn byte-string-from-buffer ^ByteString [^ByteBuffer buffer]
   "Converts buffer content to a byte-array and releases the buffer back to the pool."
   (let [a (byte-array (.remaining (.flip buffer)))]
     (release-buffer (.get buffer a))
     (byte-string a)))
 
-(defn ^ByteBuffer byte-buffer-from-string [^ByteString b]
+(defn byte-buffer-from-string ^ByteBuffer [^ByteString b]
   "Acquires a buffer from the pool and fills it with 'b'. Assumes (but does not assert) that 'capacity' > 'count b'."
   (doto (acquire-buffer) (.put ^bytes (.array b)) (.flip)))
 
-(defn- byte-array-compute-failure [^bytes pattern]
-  "Very much 'java-style', maybe too much..."
-  (let [n (count pattern)
-        failure (long-array n)]
-    (loop [i 1]
-      (if (< i n)
-        (let [j (loop [j 0]
-                  (if (and (> j 0) (not= (aget pattern j) (aget pattern i)))
-                    (recur (aget failure (- j 1)))
-                    j))]
-          (aset-byte failure i (if (= (aget pattern j) (aget pattern i)) (inc j) j))
-          (recur (inc i)))
-        failure))))
+;; search for a pattern within a byte-array
 
-(def hello (.getBytes "Hello"))
-(def data (.getBytes "AbadckajsdlfjHelloasdkfjsaldkfj"))
-(def h (String. hello))
-(def d (String. data))
+(def ^:private byte-array-index
+  (memoize
+    (fn ^longs [^bytes pattern]
+      (let [n (count pattern)
+            failure (long-array n)]
+        (loop [i 1]
+          (if (< i n)
+            (let [m (aget pattern i)
+                  j (loop [j 0]
+                      (if (and (> j 0) (not= (aget pattern j) m))
+                        (recur (aget failure (dec j)))
+                        j))]
+              (aset-long failure i (if (= (aget pattern j) m) (inc j) j))
+              (recur (inc i)))
+            failure))))))
 
-(require
-  '[criterium.core :refer [bench quick-bench with-progress-reporting]])
-
-(defn ^long byte-array-index-of
-  ([^bytes array ^bytes pattern]
+(defn byte-array-index-of
+  "Ugly, but 5x faster than 'String/indexOf'."
+  (^long [^bytes array ^bytes pattern]
    (byte-array-index-of array pattern 0))
-  ([^bytes array ^bytes pattern ^long from]
+  (^long [^bytes array ^bytes pattern ^long from]
    (byte-array-index-of array pattern from (count array)))
-  ([^bytes array ^bytes pattern ^long from ^long to]
-   (let [p (count pattern)]
-     (if (= p 1)
+  (^long [^bytes array ^bytes pattern ^long from ^long to]
+   (let [len (count pattern)]
+     (if (= len 1)
        (let [b ^byte (aget pattern 0)]
          (loop [i from]
            (if (< i to)
@@ -90,21 +87,29 @@
                i
                (recur (inc i)))
              -1)))
-       (let [^longs failure (byte-array-compute-failure pattern)]
+       (let [failure (byte-array-index pattern)]
          (loop [i from k 0]
            (if (< i to)
-             (let [^byte j (loop [j (byte k)]
-                             (if (and (> j 0) (not= (aget pattern j) (aget array i)))
-                               (recur (byte (aget failure (- j 1))))
-                               (if (= (aget pattern j) (aget array i)) (inc j) j)))]
-               (if (= j p)
-                 (inc (- i p))
+             (let [j (long (loop [l k]
+                             (if (and (> l 0) (not= (aget pattern l) (aget array i)))
+                               (recur (aget failure (dec l)))
+                               (if (= (aget pattern l) (aget array i)) (inc l) l))))]
+               (if (= j len)
+                 (inc (- i len))
                  (recur (inc i) j)))
              -1)))))))
 
-(with-progress-reporting (bench (byte-array-index-of data hello)))
-
-(defn ^long byte-string-index-of [^ByteString b ^bytes pattern]
+(defn byte-string-index-of ^long [^ByteString b ^bytes pattern]
   (byte-array-index-of ^bytes (.array b) pattern ^long (.from b) ^long (.to b)))
+
+;; benchmarks
+
+(require
+  '[criterium.core :refer [bench quick-bench with-progress-reporting]])
+
+(def H (.getBytes "Hello"))
+(def data (.getBytes "asldkjfaslkdjfHellolaksjdflaksjdflaksj"))
+
+;(with-progress-reporting (bench (byte-array-index-of data H)))
 
 ;; eof
