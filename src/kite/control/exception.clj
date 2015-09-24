@@ -64,4 +64,15 @@
   exception 'value'. Exceptions that are either fatal or informational are rethrown."
   `(try ~body (catch Throwable e# ((comp fatal?! info?!) e# ~value))))
 
+;; stackless exception for control
+
+(defn control-exception
+  "Returns a stack-less exception for control flow purposes. Much faster than a normal exception."
+  ([]
+   (proxy [Throwable] []
+     (fillInStackTrace [] this)))
+  ([^String message]
+   (proxy [Throwable] [^String message]
+     (fillInStackTrace [] this))))
+
 ;; eof

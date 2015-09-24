@@ -10,13 +10,10 @@
   '[kite.monad :refer :all]
   '[kite.execution :refer :all]
   '[kite.concurrent :refer :all]
+  '[kite.string :refer :all]
   '[kite.aio :refer :all])
 
-(import
-  [kite.aio ByteString])
-
+(load "http/status")
 (load "http/parser")
-
-(comment ByteString)
 
 ;; eof

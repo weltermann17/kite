@@ -8,10 +8,10 @@
   '[kite.category :refer :all]
   '[kite.monad :refer :all]
   '[kite.execution :refer :all]
-  '[kite.concurrent :refer :all])
+  '[kite.concurrent :refer :all]
+  '[kite.string :refer :all])
 
-(load "aio/bytestring")
-(load "aio/buffer")
+(load "aio/pool")
 (load "aio/group")
 (load "aio/socket")
 (load "aio/server")

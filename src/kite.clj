@@ -6,6 +6,10 @@
   '[kite.control :refer :all]
   '[kite.monad :refer :all]
   '[kite.context :refer :all]
-  '[kite.concurrent :refer :all])
+  '[kite.execution :refer :all]
+  '[kite.concurrent :refer :all]
+  '[kite.string :refer :all]
+  '[kite.aio :refer :all]
+  '[kite.http :refer :all])
 
 ;; eof
