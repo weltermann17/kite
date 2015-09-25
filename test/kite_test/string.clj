@@ -9,8 +9,7 @@
 (expect 7 (byte-array-index-of (.getBytes "aaaaabbaaa") (.getBytes "aaa") 4))
 (expect -1 (byte-array-index-of (.getBytes "aaaaabbaaa") (.getBytes "aaa") 4 9))
 (expect 7 (byte-array-index-of (.getBytes "aaaaabbaaa") (.getBytes "aaa") 4 10))
-(expect [(byte-string (.getBytes "aaa")) (byte-string (.getBytes "aabbaaa"))]
-        (starts-with (byte-string (.getBytes "aaaaabbaaa")) (.getBytes "aaa")))
-(expect nil (starts-with (byte-string (.getBytes "aaaaabbaaa")) (.getBytes "bba")))
+(expect (starts-with (byte-string (.getBytes "aaaaabbaaa")) (byte-string (.getBytes "aaa"))))
+(expect nil? (starts-with (byte-string (.getBytes "aaaaabbaaa")) (byte-string (.getBytes "bba"))))
 
 ;; eof

@@ -44,11 +44,11 @@
                                           response
                                           write-h
                                           write-e))]
-              (write-h nil-bytes)))
+              (write-h empty-byte-array)))
           (mk-err :accept))
         (info server))
       (mk-err :server))
-    (await-channel-group-termination (from-context :channel-group) 1000)
+    (await-channel-group-termination (from-context :channel-group) 19000)
     (shutdown-channel-group (from-context :channel-group) 1000))
   )
 

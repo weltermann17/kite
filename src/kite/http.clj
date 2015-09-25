@@ -13,6 +13,7 @@
   '[kite.string :refer :all]
   '[kite.aio :refer :all])
 
+(load "http/constant")
 (load "http/status")
 (load "http/parser")
 

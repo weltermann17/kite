@@ -36,41 +36,56 @@
              -1)))
        (if (= len 2)
          (let [a ^byte (aget pattern 0)
-               b ^byte (aget pattern 1)]
+               b ^byte (aget pattern 1)
+               n (dec to)]
            (loop [i from]
-             (if (< i (dec to))
+             (if (< i n)
                (if (and (= a ^byte (aget array i))
-                        (= b ^byte (aget array (+ i 1))))
+                        (= b ^byte (aget array (inc i))))
                  i
                  (recur (inc i)))
                -1)))
-         (if (= len 4)
+         (if (= len 3)
            (let [a ^byte (aget pattern 0)
                  b ^byte (aget pattern 1)
                  c ^byte (aget pattern 2)
-                 d ^byte (aget pattern 3)]
+                 n (- to 2)]
              (loop [i from]
-               (if (< i (- to 3))
+               (if (< i n)
                  (if (and (= a ^byte (aget array i))
-                          (= b ^byte (aget array (+ i 1)))
-                          (= c ^byte (aget array (+ i 2)))
-                          (= d ^byte (aget array (+ i 3))))
+                          (= b ^byte (aget array (inc i)))
+                          (= c ^byte (aget array (+ i 2))))
                    i
                    (recur (inc i)))
                  -1)))
-           (let [failure ^longs (byte-array-index pattern)]
-             (loop [i from k 0]
-               (if (< i to)
-                 (let [m (aget array i)
-                       j (long (loop [l k]
-                                 (let [c (not= (aget pattern l) m)]
-                                   (if (and (> l 0) c)
-                                     (recur (aget failure (dec l)))
-                                     (if c l (inc l))))))]
-                   (if (= j len)
-                     (inc (- i len))
-                     (recur (inc i) j)))
-                 -1)))))))))
+           (if (= len 4)
+             (let [a ^byte (aget pattern 0)
+                   b ^byte (aget pattern 1)
+                   c ^byte (aget pattern 2)
+                   d ^byte (aget pattern 3)
+                   n (- to 3)]
+               (loop [i from]
+                 (if (< i n)
+                   (if (and (= a ^byte (aget array i))
+                            (= b ^byte (aget array (inc i)))
+                            (= c ^byte (aget array (+ i 2)))
+                            (= d ^byte (aget array (+ i 3))))
+                     i
+                     (recur (inc i)))
+                   -1)))
+             (let [failure ^longs (byte-array-index pattern)]
+               (loop [i from k 0]
+                 (if (< i to)
+                   (let [m (aget array i)
+                         j (long (loop [l k]
+                                   (let [c (not= (aget pattern l) m)]
+                                     (if (and (> l 0) c)
+                                       (recur (aget failure (dec l)))
+                                       (if c l (inc l))))))]
+                     (if (= j len)
+                       (inc (- i len))
+                       (recur (inc i) j)))
+                   -1))))))))))
 
 ;; benchmarks
 
