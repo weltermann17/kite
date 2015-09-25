@@ -25,6 +25,7 @@
   (cond
     (starts-with protocol http-1-1) :http-1-1
     (starts-with protocol http-1-0) :http-1-0
+    (starts-with protocol http-2-0) :http-2-0
     :else (throw server-505)))
 
 (defn next-request [^ByteString b]
@@ -33,23 +34,24 @@
          previous nil
          previouslines nil
          in b]
-    (if-let [rest (starts-with in previouslines)]
-      (let [x (count in) y (count previouslines)]
-        (if (= 0 (mod x y))
-          (concat result (repeat (/ x y) previous))
-          (recur (conj result previous) previous previouslines rest)))
-      (if (blank? in)
-        result
-        (let [[requestlines more] (take-with in end-of-headers)
-              [firstline headers] (take-until requestlines end-of-line)
-              [method path protocol] (split-delimiter firstline space)
-              request {:method   (parse-method method)
-                       :protocol (parse-protocol protocol)
-                       :path     (split-delimiter path slash)
-                       :headers  (delay (into {} (map parse-header-line (split-delimiter headers end-of-line))))}]
-          (if (blank? more)
-            (conj result request)
-            (recur (conj result request) request requestlines more)))))))
+    (let [x (count in) y (count previouslines)]
+      (if (and (> y 0)
+               (= 0 (mod x y))
+               ;(starts-with in (first (take-until previouslines end-of-line)))
+               )
+        (concat result (repeat (/ x y) previous))
+        (if (blank? in)
+          result
+          (let [[requestlines more] (take-with in end-of-headers)
+                [firstline headers] (take-until requestlines end-of-line)
+                [method path protocol] (split-delimiter firstline space)
+                request {:method   (parse-method method)
+                         :protocol (parse-protocol protocol)
+                         :path     (split-delimiter path slash)
+                         :headers  (delay (into {} (map parse-header-line (split-delimiter headers end-of-line))))}]
+            (if (blank? more)
+              (conj result request)
+              (recur (conj result request) request requestlines more))))))))
 
 (defn get-header ^ByteString [request header]
   "As :headers is a 'delay' access to a header within requires a deref."

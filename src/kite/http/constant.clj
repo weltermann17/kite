@@ -36,6 +36,6 @@
 
 (def ^:constant ^ByteString http-1-1 (byte-string (.getBytes "HTTP/1.1")))
 
-; (def ^:constant ^ByteString http-2-0 (byte-string (.getBytes "HTTP/2.0")))
+(def ^:constant ^ByteString http-2-0 (byte-string (.getBytes "HTTP/2.0")))
 
 ;; eof
