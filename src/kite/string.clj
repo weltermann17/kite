@@ -4,7 +4,7 @@
   '[clojure.core.strint :refer [<<]]
   '[kite.control :refer :all])
 
-(load "string/bytestring")
 (load "string/util")
+(load "string/bytestring")
 
 ;; eof

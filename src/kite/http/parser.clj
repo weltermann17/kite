@@ -33,22 +33,20 @@
          previous nil
          previouslines nil
          in b]
-    (if-let [rest 42]                                       ; (starts-with in previouslines)]
+    (if-let [rest (starts-with in previouslines)]
       (let [x (count in) y (count previouslines)]
         (if (= 0 (mod x y))
-          (conj result (repeat (/ x y) previous))
+          (concat result (repeat (/ x y) previous))
           (recur (conj result previous) previous previouslines rest)))
       (if (blank? in)
         result
-        (let [[requestlines more] (take-until in end-of-headers)
+        (let [[requestlines more] (take-with in end-of-headers)
               [firstline headers] (take-until requestlines end-of-line)
               [method path protocol] (split-delimiter firstline space)
               request {:method   (parse-method method)
                        :protocol (parse-protocol protocol)
                        :path     (split-delimiter path slash)
-                       :headers  (delay (into {} (map parse-header-line (split-delimiter headers end-of-line))))
-                       }
-              ]
+                       :headers  (delay (into {} (map parse-header-line (split-delimiter headers end-of-line))))}]
           (if (blank? more)
             (conj result request)
             (recur (conj result request) request requestlines more)))))))
@@ -61,12 +59,14 @@
   '[criterium.core :refer [bench quick-bench with-progress-reporting]])
 
 (def ^String small "GET /ping HTTP/1.1\nHost: 127.0.0.1\r\n\r\n")
-(def ^String big "GET /ping HTTP/1.1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.5\r\nCache-Control: max-age=0\r\nConnection: keep-alive\r\nHost: localhost:3001\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:40.0) Gecko/20100101 Firefox/40.0\r\n\r\n")
+(def ^String big "GET /ping/blabla/blub/ HTTP/1.1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.5\r\nCache-Control: max-age=0\r\nConnection: keep-alive\r\nHost: localhost:3001\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:40.0) Gecko/20100101 Firefox/40.0\r\n\r\n")
 (def ^String verybig "GET /ping HTTP/1.1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.5\r\nCache-Control: max-age=0\r\nConnection: keep-alive\r\nHost: localhost:3001\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:40.0) Gecko/20100101 Firefox/40.0\r\n\r\nGET /ping HTTP/1.1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.5\r\nCache-Control: max-age=0\r\nConnection: keep-alive\r\nHost: localhost:3001\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:40.0) Gecko/20100101 Firefox/40.0\r\n\r\nGET /ping HTTP/1.1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.5\r\nCache-Control: max-age=0\r\nConnection: keep-alive\r\nHost: localhost:3001\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:40.0) Gecko/20100101 Firefox/40.0\r\n\r\n")
 (def rq (byte-string (.getBytes verybig)))
 
-(println "requests" (next-request rq))
-;(println @(:headers (first (next-request rq))))
+(let [r (next-request rq)]
+  (println "requests" (count r) r)
+  (println (keys @(:headers (first r))))
+  )
 ;(with-progress-reporting (bench (next-request rq)))
 
 ;; eof

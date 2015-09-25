@@ -13,70 +13,72 @@
     "Returns true if this has a length of 0, has a length of 0 when trimmed,
     is nil or is the nil-bytes-string.")
   (convert-to-byte-array [_]
-    "Returns a new byte array from 0 to length with the content of this. Expensive.")
+    "Returns a new byte array from 0 to length with the content of this, this is fairly expensive.")
   (convert-to-string [_]
-    "Returns the content as a String. Expensive.")
+    "Returns the content as a String, this is fairly expensive.")
   (split-delimiter [_ ^bytes delimiter]
     "Returns a vector of ByteString with all chunks each of it without the delimiter.")
-  (starts-with [_ ^ByteString pattern]
+  (starts-with [_ ^bytes pattern]
     "If true returns the remainder of the ByteString else nil. 'pattern' must be longer than 0 but not longer than this.")
   (take-until [_ ^bytes delimiter]
     "If the delimiter is found returns a vector of two ByteStrings first with everything
     until and including the delimiter and second with the remainder.
-    Else returns a vector of this and nil."))
+    If not returns a vector of this and the empty-byte-string.")
+  (take-with [_ ^bytes delimiter]
+    "Like 'take-until' but including the delimiter if found."))
 
-(extend-type nil
-  ByteStringFns
-  (array-from-to-len [_] nil)
-  (blank? [_] true)
-  (convert-to-byte-array [_] nil)
-  (convert-to-string [_] nil)
-  (split-delimiter [_ _] nil)
-  (starts-with [_ _] nil)
-  (take-until [_ _] nil))
-
-(declare byte-array-index-of byte-string-index-of byte-string nil-byte-string)
+(declare byte-string-index-of
+         byte-string
+         empty-byte-string)
 
 (deftype ByteString [^bytes array ^long from ^long to]
   Counted
   (count [_] (- to from))
 
   ByteStringFns
-  (array-from-to-len [this]
-    [array from to (count this)])
+  (array-from-to-len [_]
+    [array from to (- to from)])
   (blank? [_]
     (= to from))
   (convert-to-byte-array [_]
     (Arrays/copyOfRange array from to))
-  (convert-to-string [this]
-    (String. array from (count this)))
+  (convert-to-string [_]
+    (String. array from (- to from)))
   (split-delimiter [this delimiter]
     (loop [result [] [next rest] (take-until this delimiter)]
-      (if (and (blank? next) (blank? rest))
-        result
-        (recur (if (blank? next) result (conj result next)) (take-until rest delimiter)))))
+      (if (blank? next)
+        (if (blank? rest)
+          result
+          (recur result (take-until rest delimiter)))
+        (recur (conj result next) (take-until rest delimiter)))))
   (starts-with [_ pattern]
     (when pattern
       (let [[parr f t len] (array-from-to-len pattern)]
         (when (= (loop [i from j f]
-                   (if (and (< i to) (< j t) (= (aget array i) (aget ^bytes parr j)))
+                   (if (and (< j t) (< i to) (= (aget array i) (aget ^bytes parr j)))
                      (recur (inc i) (inc j))
                      j))
-                 t)
+                 len)
           (byte-string array (+ from len) to)))))
   (take-until [this delimiter]
     (let [i (byte-string-index-of this delimiter)]
       (if (= -1 i)
-        [this nil]
-        [(byte-string array from (+ i (count delimiter))) (byte-string array (+ i (count delimiter)) to)])))
+        [this empty-byte-string]
+        [(byte-string array from i) (byte-string array (+ i (count delimiter)) to)])))
+  (take-with [this delimiter]
+    (let [i (byte-string-index-of this delimiter)]
+      (if (= -1 i)
+        [this empty-byte-string]
+        (let [pos (+ i (count delimiter))]
+          [(byte-string array from pos) (byte-string array pos to)]))))
 
   Object
   (equals [this that]
     (and (satisfies? ByteStringFns that)
          (= (count this) (count that))
-         ((starts-with this (convert-to-byte-array that)))))
+         ((starts-with this that))))
   (hashCode [_] (hash array))
-  (toString [this] (comment this) (<< "(ByteString array:'~{(convert-to-string this)}' from:~{from} to:~{to} length:~{(count this)})")))
+  (toString [this] (comment this) (<< "(ByteString array '~{(convert-to-string this)}' from ~{from} to ~{to} length ~{(count this)})")))
 
 ;; fns
 
