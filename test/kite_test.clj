@@ -9,7 +9,6 @@
          '[kite.context :refer :all]
          '[kite.execution :refer :all]
          '[kite.monad :refer :all]
-         '[kite.concurrent :refer :all]
          '[kite.string :refer :all]
          '[kite.aio :refer :all]
          '[kite.http :refer :all])

@@ -27,6 +27,8 @@
    (.shutdownNow channel-group))
   ([^AsynchronousChannelGroup channel-group ^Long timeout]
    (.shutdown channel-group)
-   (Thread/sleep timeout)))
+   (Thread/sleep timeout)
+   (when-not (.isShutdown channel-group)
+     (.shutdownNow channel-group))))
 
 ;; eof

@@ -1,4 +1,4 @@
-(in-ns 'kite.concurrent)
+(in-ns 'kite.execution)
 
 (import
   [clojure.lang IDeref]
@@ -12,24 +12,23 @@
   (reify
     Future
     (await [this milliseconds]
-      (letfn
-        [(-await []
-                 {:pre [(> milliseconds 0)]}
-                 (let [phaser (Phaser. 1)]
-                   (on-complete this (fn [_] (.arriveAndDeregister phaser)))
-                   (try (.awaitAdvanceInterruptibly
-                          phaser
-                          0 milliseconds TimeUnit/MILLISECONDS)
-                        @value
-                        (catch TimeoutException _
-                          (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
-                        (catch Throwable e
-                          (failure e)))))]
-        (-await)))
+      (assert (> milliseconds 0))
+      (let [phaser (Phaser. 1)]
+        (on-complete this (fn [_] (.arriveAndDeregister phaser)))
+        (try (.awaitAdvanceInterruptibly
+               phaser
+               0 milliseconds TimeUnit/MILLISECONDS)
+             @value
+             (catch TimeoutException _
+               (failure (TimeoutException. (<< "Timeout during await after ~{milliseconds} ms."))))
+             (catch Throwable e
+               (failure e)))))
     (on-complete [this f]
       (let [v @value]
         (if (= v not-yet-completed)
-          (do (conj! succ-callbacks f) (conj! fail-callbacks f))
+          (do
+            (conj! succ-callbacks f)
+            (conj! fail-callbacks f))
           (execute f v)))
       this)
     (on-success [this f]
@@ -51,7 +50,7 @@
     Object
     (equals [this o] (test-eq this o Future #(= @value @o)))
     (hashCode [_] (hash @value))
-    (toString [_] (<< "(Future  ~{@value})"))
+    (toString [_] (<< "(Future ~{@value})"))
 
     Functor
     (-fmap [this f]
@@ -102,6 +101,13 @@
   `(let [p# (promise)]
      (execute (fn [] (complete p# (result ~@body))))
      (->future p#)))
+
+(defmacro completable-future [succ fail & body]
+  `(let [p# (promise)
+         f# (->future p#)]
+     (on-success-or-failure f# ~succ ~fail)
+     (execute (fn [] (complete p# (result ~@body))))
+     f#))
 
 (defmacro blocking-future [& body]
   `(let [p# (promise)]

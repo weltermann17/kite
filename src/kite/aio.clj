@@ -8,12 +8,13 @@
   '[kite.category :refer :all]
   '[kite.monad :refer :all]
   '[kite.execution :refer :all]
-  '[kite.concurrent :refer :all]
   '[kite.string :refer :all])
 
-(load "aio/pool")
+(load "aio/bufferpool")
 (load "aio/group")
 (load "aio/socket")
+(load "aio/clientpool")
+(load "aio/client")
 (load "aio/server")
 (load "aio/context")
 

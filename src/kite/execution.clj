@@ -1,4 +1,5 @@
-(ns kite.execution)
+(ns kite.execution
+  (:refer-clojure :exclude [await future promise]))
 
 (require
   '[clojure.core.strint :refer [<<]]
@@ -14,5 +15,7 @@
 (load "execution/threadpool")
 (load "execution/forkjoin")
 (load "execution/context")
+(load "execution/promise")
+(load "execution/future")
 
 ;; eof

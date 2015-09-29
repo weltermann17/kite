@@ -7,9 +7,10 @@
   '[kite.monad :refer :all]
   '[kite.context :refer :all]
   '[kite.execution :refer :all]
-  '[kite.concurrent :refer :all]
   '[kite.string :refer :all]
   '[kite.aio :refer :all]
   '[kite.http :refer :all])
+
+(java.util.concurrent.CompletableFuture.)
 
 ;; eof

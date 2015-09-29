@@ -28,10 +28,10 @@
   nil
   (with-context
     ctx
-    (socket-server
+    (open-server
       port
       (fn [server]
-        (accept
+        (fast-accept
           server
           (fn [socket]
             (letfn [(write-h [_]
@@ -39,17 +39,56 @@
                                           read-h
                                           read-e))
                     (read-h [^ByteString b]
-                            (next-request b)
-                            (write-socket socket
-                                          response
-                                          write-h
-                                          write-e))]
+                            (parse-requests b
+                                            (fn [_]
+                                              (write-socket socket
+                                                            response
+                                                            write-h
+                                                            write-e))
+                                            (fn [e] (error e))))]
               (write-h empty-byte-array)))
           (mk-err :accept))
-        (info server))
+        (info server)
+        (open-client "localhost" 3001 1000
+                     (fn [s] (info "Connected" s))
+                     (fn [e] (error "Connection failed" e))))
       (mk-err :server))
-    (await-channel-group-termination (from-context :channel-group) 19000)
-    (shutdown-channel-group (from-context :channel-group) 1000))
-  )
+    (await-channel-group-termination (from-context :channel-group) 119000)
+    (shutdown-channel-group (from-context :channel-group) 1000)))
+
+;; testing
+
+(require
+  '[criterium.core :refer [bench quick-bench with-progress-reporting]])
+
+(defn stress-pool [^long n]
+  (loop [i n]
+    (if (> i 0)
+      (do
+        (let [b (acquire-buffer)] (.clear b) (release-buffer b))
+        (recur (dec i)))
+      i)))
+
+(defn stress [^long n]
+  (await
+    (first-success
+      (future (stress-pool n))
+      (future (stress-pool n))
+      (future (stress-pool n))
+      (future (stress-pool n))
+      (future (stress-pool n))
+      (future (stress-pool n))
+      (future (stress-pool n))
+      (future (stress-pool n))
+      (future (stress-pool n))
+      (future (stress-pool n)))
+    100))
+
+(comment
+  nil
+  (with-context
+    ctx
+    (info (stress 1000))
+    (with-progress-reporting (bench (stress 10)))))
 
 ;; eof

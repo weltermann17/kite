@@ -1,14 +1,20 @@
 (in-ns 'kite.aio)
 
+
 (import
   [java.net
+   InetSocketAddress
    StandardSocketOptions]
   [java.nio.channels
+   AsynchronousCloseException
+   AsynchronousServerSocketChannel
    AsynchronousSocketChannel
    ClosedChannelException
    CompletionHandler
    InterruptedByTimeoutException]
   [java.util.concurrent
+   ScheduledFuture
+   TimeoutException
    TimeUnit])
 
 ;; socket options
@@ -66,6 +72,7 @@
 
 (defn harmless-socket-exception? [^Throwable e]
   (or
+    (instance? AsynchronousCloseException e)
     (instance? ClosedChannelException e)
     (instance? InterruptedByTimeoutException e)
     (= "Connection reset by peer" (.getMessage e))))
@@ -95,24 +102,6 @@
            h)
     f))
 
-(defn fast-read-socket [^AsynchronousSocketChannel socket
-                        succ
-                        fail]
-  "This version is not using futures, but calls succ/fail directly on completion."
-  (let [b (acquire-buffer)
-        t (from-context :socket-read-write-timeout)
-        h (reify CompletionHandler
-            (^void failed [_ ^Throwable e _]
-              (fast-handle-failed e b socket fail))
-            (^void completed [_ bytesread _]
-              (when (= -1 bytesread) (close-socket socket))
-              (succ (byte-string-from-buffer b))))]
-    (.read socket
-           b
-           t TimeUnit/MILLISECONDS
-           nil
-           h)))
-
 ;; write handling
 
 (defn write-socket [^AsynchronousSocketChannel socket
@@ -138,6 +127,27 @@
             nil
             h)
     f))
+
+;; fast handling, calling succ or fail directly in the completion handler without a new future
+;; in the end only ~5% faster because of the lack of overhead for promise/future
+
+(defn fast-read-socket [^AsynchronousSocketChannel socket
+                        succ
+                        fail]
+  "This version is not using futures, but calls succ/fail directly on completion."
+  (let [b (acquire-buffer)
+        t (from-context :socket-read-write-timeout)
+        h (reify CompletionHandler
+            (^void failed [_ ^Throwable e _]
+              (fast-handle-failed e b socket fail))
+            (^void completed [_ bytesread _]
+              (when (= -1 bytesread) (close-socket socket))
+              (succ (byte-string-from-buffer b))))]
+    (.read socket
+           b
+           t TimeUnit/MILLISECONDS
+           nil
+           h)))
 
 (defn fast-write-socket [^AsynchronousSocketChannel socket
                          ^ByteString s

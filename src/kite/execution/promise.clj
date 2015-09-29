@@ -1,4 +1,4 @@
-(in-ns 'kite.concurrent)
+(in-ns 'kite.execution)
 
 (import
   [clojure.lang IDeref])

@@ -9,12 +9,12 @@
   '[kite.category :refer :all]
   '[kite.monad :refer :all]
   '[kite.execution :refer :all]
-  '[kite.concurrent :refer :all]
   '[kite.string :refer :all]
   '[kite.aio :refer :all])
 
 (load "http/constant")
 (load "http/status")
-(load "http/parser")
+(load "http/request")
+(load "http/response")
 
 ;; eof

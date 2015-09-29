@@ -13,6 +13,9 @@
    :byte-buffer-pool              (default-byte-buffer-pool)
    :byte-buffer-size              (default-byte-buffer-size)
    :byte-buffer-initial-pool-size (default-byte-buffer-initial-pool-size)
+   :client-per-host-maximum-size  (default-client-per-host-maximum-size)
+   :client-initial-pool-size      (default-client-initial-pool-size)
+   :client-pool                   (default-client-pool)
    })
 
 ;; context
@@ -20,10 +23,12 @@
 (defn add-aio-context [context config]
   (let [c (merge-config (default-aio-configuration) config)]
     (merge context
-           {:config                    c
-            :channel-group             ((:channel-group c) (context :executor))
-            :socket-read-write-timeout (:socket-read-write-timeout c)
-            :byte-buffer-size          (:byte-buffer-size c)
-            :byte-buffer-pool          ((:byte-buffer-pool c))})))
+           {:config                       c
+            :channel-group                ((:channel-group c) (context :executor))
+            :socket-read-write-timeout    (:socket-read-write-timeout c)
+            :byte-buffer-size             (:byte-buffer-size c)
+            :byte-buffer-pool             ((:byte-buffer-pool c))
+            :client-per-host-maximum-size (:client-per-host-maximum-size c)
+            :client-pool                  ((:client-pool c))})))
 
 ;; eof
