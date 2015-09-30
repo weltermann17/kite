@@ -14,6 +14,8 @@
   (when (seq coll)
     (or (pred (first coll)) (recur pred (next coll)))))
 
+(def not-nil? (complement nil?))
+
 (defmacro ignore [& body]
   "Use this if it is save to ignore any exception thrown by 'body'."
   `(try ~@body (catch Throwable _#)))

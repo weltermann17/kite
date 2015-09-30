@@ -31,7 +31,7 @@
     (open-server
       port
       (fn [server]
-        (fast-accept
+        (accept
           server
           (fn [socket]
             (letfn [(write-h [_]
@@ -50,7 +50,14 @@
           (mk-err :accept))
         (info server)
         (open-client "localhost" 3001 1000
-                     (fn [s] (info "Connected" s))
+                     (fn [c]
+                       (info "Connected" c)
+                       (close-client c)
+                       (open-client "localhost" 3001 1000
+                                    (fn [c]
+                                      (info "Connected again" c)
+                                      (close-client c))
+                                    (fn [e] (error "Second failed" e))))
                      (fn [e] (error "Connection failed" e))))
       (mk-err :server))
     (await-channel-group-termination (from-context :channel-group) 119000)
