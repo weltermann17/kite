@@ -53,11 +53,14 @@
                      (fn [c]
                        (info "Connected" c)
                        (close-client c)
-                       (open-client "localhost" 3001 1000
-                                    (fn [c]
-                                      (info "Connected again" c)
-                                      (close-client c))
-                                    (fn [e] (error "Second failed" e))))
+                       (loop [i 1000000]
+                         (open-client "localhost" 3001 1000
+                                      (fn [c]
+                                        ;(info "Connected again" c)
+                                        (close-client c))
+                                      (fn [e] (error "Second failed" e)))
+                         (if (> i 0) (recur (dec i)) i))
+                       (info "end loop"))
                      (fn [e] (error "Connection failed" e))))
       (mk-err :server))
     (await-channel-group-termination (from-context :channel-group) 119000)

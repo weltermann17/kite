@@ -22,7 +22,7 @@
   (^AsynchronousSocketChannel [^InetSocketAddress remoteaddress ^Long timeout succ fail]
    (try
      (assert (> timeout 0))
-     (let [client (acquire-client-from-per-remoteaddress-pool remoteaddress)
+     (let [client (acquire-client remoteaddress)
            timeout-occurred (atom false)
            p (promise)
            f (->future p)
@@ -38,7 +38,6 @@
                  (handle (failure e)))
                (^void completed [_ _ _]
                  (handle (success client))))]
-       (info "open" client (connected? client))
        (on-success-or-failure f succ fail)
        (if (connected? client)
          (handle (success client))
@@ -47,6 +46,6 @@
      (catch Throwable e (fail e)))))
 
 (defn close-client [^AsynchronousSocketChannel client]
-  (release-client-to-per-remoteaddress-pool client))
+  (release-client client))
 
 ;; eof
