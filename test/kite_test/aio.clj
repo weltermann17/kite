@@ -49,18 +49,23 @@
               (write-h empty-byte-array)))
           (mk-err :accept))
         (info server)
-        (open-client "localhost" 3001 1000
+        (open-client "localhost" 3001 500
                      (fn [c]
-                       (info "Connected" c)
+                       ;(info "Connected" c)
                        (close-client c)
-                       (loop [i 1000000]
-                         (open-client "localhost" 3001 1000
-                                      (fn [c]
-                                        ;(info "Connected again" c)
-                                        (close-client c))
-                                      (fn [e] (error "Second failed" e)))
-                         (if (> i 0) (recur (dec i)) i))
-                       (info "end loop"))
+                       (doall
+                         (for [i (range 1)] (future
+                                              (info "start loop" i)
+                                              (loop [j 100000000]
+                                                (info "j" j)
+                                                (open-client "localhost" 3001 500
+                                                             (fn [c]
+                                                               (info "Connected" i c)
+                                                               (Thread/sleep 5000)
+                                                               (close-client c))
+                                                             (fn [e] (error "Second failed" i e)))
+                                                (info "j after open" j)
+                                                (if (> j 0) (recur (dec j)) j))))))
                      (fn [e] (error "Connection failed" e))))
       (mk-err :server))
     (await-channel-group-termination (from-context :channel-group) 119000)
