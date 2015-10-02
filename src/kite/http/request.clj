@@ -28,34 +28,35 @@
     (starts-with protocol http-2-0) :http-2-0
     :else (throw server-505)))
 
-(defn parse-requests [^ByteString b
-                      succ
-                      fail]
+(defn parse-requests
   "Returns a future. On success 'succ' is called with a vector of requests.
    On failure 'fail' is called with an exception.
    Handles pipe-lined requests with special handling for benchmark situations."
-  (completable-future
-    succ fail
-    (loop [result []
-           previous nil
-           previouslines nil
-           in b]
-      (let [x (count in) y (count previouslines)]
-        (if (and (> y 0)
-                 (= 0 (mod x y)))
-          (concat result (repeat (/ x y) previous))
-          (if (blank? in)
-            result
-            (let [[requestlines more] (take-with in end-of-headers)
-                  [firstline headers] (take-until requestlines end-of-line)
-                  [method path protocol] (split-delimiter firstline space)
-                  request {:method   (parse-method method)
-                           :protocol (parse-protocol protocol)
-                           :path     (split-delimiter path slash)
-                           :headers  (delay (into {} (map parse-header-line (split-delimiter headers end-of-line))))}]
-              (if (blank? more)
-                (conj result request)
-                (recur (conj result request) request requestlines more)))))))))
+  ([^ByteString b succ]
+   (parse-requests b succ (fn [e] (error "parse-requests" e))))
+  ([^ByteString b succ fail]
+   (completable-future
+     succ fail
+     (loop [result []
+            previous nil
+            previouslines nil
+            in b]
+       (let [x (count in) y (count previouslines)]
+         (if (and (> y 0)
+                  (= 0 (mod x y)))
+           (concat result (repeat (/ x y) previous))
+           (if (blank? in)
+             result
+             (let [[requestlines more] (take-with in end-of-headers)
+                   [firstline headers] (take-until requestlines end-of-line)
+                   [method path protocol] (split-delimiter firstline space)
+                   request {:method   (parse-method method)
+                            :protocol (parse-protocol protocol)
+                            :path     (split-delimiter path slash)
+                            :headers  (delay (into {} (map parse-header-line (split-delimiter headers end-of-line))))}]
+               (if (blank? more)
+                 (conj result request)
+                 (recur (conj result request) request requestlines more))))))))))
 
 ;; move to req fns
 

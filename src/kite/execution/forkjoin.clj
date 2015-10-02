@@ -14,7 +14,7 @@
   (reader (fn [msg e] (error "forkjoin-error-reporter:" msg ":" e))))
 
 (defn- default-forkjoin-parallelism-ratio []
-  (reader 4.0))
+  (reader 3.0))
 
 (defn- default-forkjoin-parallelism []
   "Computed from the parallelism ratio and the number of available cores."

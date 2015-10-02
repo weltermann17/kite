@@ -63,8 +63,8 @@
          (.execute ^ExecutorService executor f))))))
 
 (defn execute-all [fs v]
-  "It's actually not 'doseq' that is a performance killer,
-  but a call to more than only one 'execute's."
+  "It's actually not 'doseq' that is a performance killer, but a call to more than only one 'execute'.
+  Still avoiding 'doseq' from small counts is a little bit faster."
   (case (count fs)
     1 (execute (first fs) v)
     2 (do (execute (first fs) v) (execute (second fs) v))

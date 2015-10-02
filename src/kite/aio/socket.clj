@@ -65,12 +65,7 @@
   (close-socket socket)
   (complete p (failure e)))
 
-(defn- fast-handle-failed [^Throwable e ^ByteBuffer b ^AsynchronousSocketChannel socket fail]
-  (release-buffer b)
-  (close-socket socket)
-  (fail e))
-
-(defn harmless-socket-exception? [^Throwable e]
+(defn closing-socket-exception? [^Throwable e]
   (or
     (instance? AsynchronousCloseException e)
     (instance? ClosedChannelException e)
@@ -79,94 +74,54 @@
 
 ;; read handling
 
-(defn read-socket [^AsynchronousSocketChannel socket
-                   succ
-                   fail]
+(defn read-socket
   "Version of read using futures. It is slower than calling succ/fail directly,
   but doesn't block the io completion thread. Returns a future."
-  (let [p (promise)
-        f (->future p)
-        b (acquire-buffer)
-        t (from-context :socket-read-write-timeout)
-        h (reify CompletionHandler
-            (^void failed [_ ^Throwable e _]
-              (handle-failed p e b socket))
-            (^void completed [_ bytesread _]
-              (when (= -1 bytesread) (close-socket socket))
-              (complete p (success (byte-string-from-buffer b)))))]
-    (on-success-or-failure f succ fail)
-    (.read socket
-           b
-           t TimeUnit/MILLISECONDS
-           nil
-           h)
-    f))
-
-;; write handling
-
-(defn write-socket [^AsynchronousSocketChannel socket
-                    ^ByteString s
-                    succ
-                    fail]
-  (let [p (promise)
-        f (->future p)
-        b (byte-buffer-from-string s)
-        t (from-context :socket-read-write-timeout)
-        h (reify CompletionHandler
-            (^void failed [_ ^Throwable e _]
-              (handle-failed p e b socket))
-            (^void completed [this _ _]
-              (if (= 0 (.remaining b))
-                (do (release-buffer b) (complete p (success s)))
-                (.write socket b t TimeUnit/MILLISECONDS nil this))
-              ))]
-    (on-success-or-failure f succ fail)
-    (.write socket
+  ([^AsynchronousSocketChannel socket succ]
+   (read-socket socket succ (fn [e] (error "read-socket" e))))
+  ([^AsynchronousSocketChannel socket succ fail]
+   (let [p (promise)
+         f (->future p)
+         b (acquire-buffer)
+         t (from-context :socket-read-write-timeout)
+         h (reify CompletionHandler
+             (^void failed [_ ^Throwable e _]
+               (handle-failed p e b socket))
+             (^void completed [_ bytesread _]
+               (when (= -1 bytesread) (close-socket socket))
+               (complete p (success (byte-string-from-buffer b)))))]
+     (on-success-or-failure f succ fail)
+     (.read socket
             b
             t TimeUnit/MILLISECONDS
             nil
             h)
-    f))
+     f)))
 
-;; fast handling, calling succ or fail directly in the completion handler without a new future
-;; in the end only ~5% faster because of the lack of overhead for promise/future
+;; write handling
 
-(defn fast-read-socket [^AsynchronousSocketChannel socket
-                        succ
-                        fail]
-  "This version is not using futures, but calls succ/fail directly on completion."
-  (let [b (acquire-buffer)
-        t (from-context :socket-read-write-timeout)
-        h (reify CompletionHandler
-            (^void failed [_ ^Throwable e _]
-              (fast-handle-failed e b socket fail))
-            (^void completed [_ bytesread _]
-              (when (= -1 bytesread) (close-socket socket))
-              (succ (byte-string-from-buffer b))))]
-    (.read socket
-           b
-           t TimeUnit/MILLISECONDS
-           nil
-           h)))
-
-(defn fast-write-socket [^AsynchronousSocketChannel socket
-                         ^ByteString s
-                         succ
-                         fail]
-  (let [b (byte-buffer-from-string s)
-        t (from-context :socket-read-write-timeout)
-        h (reify CompletionHandler
-            (^void failed [_ ^Throwable e _]
-              (fast-handle-failed e b socket fail))
-            (^void completed [this _ _]
-              (if (= 0 (.remaining b))
-                (do (release-buffer b) (succ s))
-                (.write socket b t TimeUnit/MILLISECONDS nil this))
-              ))]
-    (.write socket
-            b
-            t TimeUnit/MILLISECONDS
-            nil
-            h)))
+(defn write-socket
+  ([^AsynchronousSocketChannel socket ^ByteString s succ]
+   (write-socket socket s succ (fn [e] (error "write-socket" e))))
+  ([^AsynchronousSocketChannel socket ^ByteString s succ fail]
+   (let [p (promise)
+         f (->future p)
+         b (byte-buffer-from-string s)
+         t (from-context :socket-read-write-timeout)
+         h (reify CompletionHandler
+             (^void failed [_ ^Throwable e _]
+               (handle-failed p e b socket))
+             (^void completed [this _ _]
+               (if (= 0 (.remaining b))
+                 (do (release-buffer b) (complete p (success s)))
+                 (.write socket b t TimeUnit/MILLISECONDS nil this))
+               ))]
+     (on-success-or-failure f succ fail)
+     (.write socket
+             b
+             t TimeUnit/MILLISECONDS
+             nil
+             h)
+     f)))
 
 ;; eof

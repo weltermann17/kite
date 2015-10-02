@@ -4,6 +4,8 @@
 
 (defn open-server
   "Returns a future. On success the server is passed to the 'succ' callback. "
+  ([^Long port succ]
+   (open-server port succ (fn [e] (error "server" e))))
   ([^Long port succ fail]
    (let [config (from-context :config)
          backlog (:socket-backlog config)]
@@ -22,23 +24,25 @@
 
 (defn close-server [^AsynchronousServerSocketChannel server]
   "Not really useful, just for symmetry."
-  (.close server))
+  (close-socket server))
 
-(defn accept [^AsynchronousServerSocketChannel server succ fail]
-  "Returns a future."
-  (let [p (promise)
-        f (->future p)
-        h (letfn [(handle [v]
-                          (complete p v)
-                          (accept server succ fail))]
-            (reify CompletionHandler
-              (^void failed [_ ^Throwable e _]
-                (handle (failure e)))
-              (^void completed [_ socket _]
-                (handle (success (configure-socket ^AsynchronousSocketChannel socket))))))]
-    (on-success-or-failure f succ fail)
-    (.accept server nil h)
-    f))
+(defn accept
+  ([^AsynchronousServerSocketChannel server succ]
+   (accept server succ (fn [e] (error "accept" e))))
+  ([^AsynchronousServerSocketChannel server succ fail]
+   (let [p (promise)
+         f (->future p)
+         h (reify CompletionHandler
+             (^void failed [_ ^Throwable e _]
+               (when-not (closing-socket-exception? e)
+                 (accept server succ fail))
+               (complete p (failure e)))
+             (^void completed [_ socket _]
+               (complete p (success (configure-socket ^AsynchronousSocketChannel socket)))
+               (accept server succ fail)))]
+     (on-success-or-failure f succ fail)
+     (.accept server nil h)
+     f)))
 
 (defn fast-accept [^AsynchronousServerSocketChannel server succ fail]
   "Callback called in completion handler directly."

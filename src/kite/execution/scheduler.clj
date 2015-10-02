@@ -36,24 +36,27 @@
 
 ;; fn
 
-(defn schedule-once [f milliseconds]
+(defn schedule-once [initial-delay f & args]
   "Returns a ScheduledFuture that can be cancelled."
   {:pre [fn? f
-         number? milliseconds]}
+         number? initial-delay
+         (> initial-delay 0)]}
   (let [scheduler (from-context :scheduler)]
     (.schedule
       ^ScheduledExecutorService scheduler
-      ^Runnable f
-      ^Long milliseconds TimeUnit/MILLISECONDS)))
+      ^Runnable (fn [] (apply f args))
+      ^Long initial-delay TimeUnit/MILLISECONDS)))
 
-(defn schedule-repeatedly [f initial-delay repeated-delay]
+(defn schedule-repeatedly [initial-delay repeated-delay f & args]
   {:pre [fn? f
          number? initial-delay
-         number? repeated-delay]}
+         number? repeated-delay
+         (> initial-delay 0)
+         (> repeated-delay 0)]}
   (let [scheduler (from-context :scheduler)]
     (.scheduleAtFixedRate
       ^ScheduledExecutorService scheduler
-      ^Runnable f
+      ^Runnable (fn [] (apply f args))
       ^Long initial-delay ^Long repeated-delay TimeUnit/MILLISECONDS)))
 
 ;; eof

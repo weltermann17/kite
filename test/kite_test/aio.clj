@@ -1,21 +1,16 @@
 (in-ns 'kite-test)
 
-(import [kite.string ByteString])
+(import
+  [kite.string ByteString])
 
-(def ^:private ^:constant ^ByteString response
+(def ^:private ^:constant ^ByteString responsestring
   (let [c 48
         s "HTTP/1.1 200 OK\nConnection: keep-alive\nContent-Type: text/plain\nContent-Length: 4\nDate: Wed, 11 Mar 2015 13:13:24 GMT\n\npong"
         r (reduce str (repeat c s))]
     (byte-string (.getBytes ^String r))))
 
-(defn- err [prefix ^Throwable e]
-  (when-not (harmless-socket-exception? e) (error prefix (type e) (.getMessage e) e)))
-
-(defn- mk-err [prefix] (partial err prefix))
-
-(def ^:private read-e (mk-err :read))
-
-(def ^:private write-e (mk-err :write))
+(def ^:private ^:constant ^ByteString requeststring
+  (byte-string (.getBytes "GET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\nGET /ping HTTP/1.1\r\nHost: 127.0.0.1:3001\r\n\r\n")))
 
 (def ^:private ctx
   (-> {}
@@ -23,6 +18,8 @@
       (add-aio-context {})))
 
 (def ^:private port 3001)
+
+(def ^:private cc (atom 0))
 
 (expect
   nil
@@ -33,77 +30,63 @@
       (fn [server]
         (accept
           server
-          (fn [socket]
-            (letfn [(write-h [_]
-                             (read-socket socket
-                                          read-h
-                                          read-e))
-                    (read-h [^ByteString b]
-                            (parse-requests b
-                                            (fn [_]
-                                              (write-socket socket
-                                                            response
-                                                            write-h
-                                                            write-e))
-                                            (fn [e] (error e))))]
-              (write-h empty-byte-array)))
-          (mk-err :accept))
+          (fn [client]
+            (letfn
+              [(r [_] (read-socket client w))
+               (w [b] (parse-requests b (fn [_] (write-socket client responsestring r))))]
+              (r nil))))
         (info server)
-        (open-client "localhost" 3001 500
-                     (fn [c]
-                       ;(info "Connected" c)
-                       (close-client c)
-                       (doall
-                         (for [i (range 1)] (future
-                                              (info "start loop" i)
-                                              (loop [j 100000000]
-                                                (info "j" j)
-                                                (open-client "localhost" 3001 500
-                                                             (fn [c]
-                                                               (info "Connected" i c)
-                                                               (Thread/sleep 5000)
-                                                               (close-client c))
-                                                             (fn [e] (error "Second failed" i e)))
-                                                (info "j after open" j)
-                                                (if (> j 0) (recur (dec j)) j))))))
-                     (fn [e] (error "Connection failed" e))))
-      (mk-err :server))
+        ;(schedule-once 5000 (fn [] (close-server server) (warn server)))
+        (let [remote (remote-address "localhost" port)]
+          (loop [j 200]
+            (when (> j 0)
+              (open-client
+                remote
+                (fn [client]
+                  (letfn [(r [_]
+                             (read-socket client w)
+                             (let [k (swap! cc + 48)] (when (= 0 (mod k 1000000)) (info k))))
+                          (w [_] (write-socket client requeststring r))]
+                    (w nil))))
+              (recur (dec j)))))))
     (await-channel-group-termination (from-context :channel-group) 119000)
     (shutdown-channel-group (from-context :channel-group) 1000)))
 
 ;; testing
 
-(require
-  '[criterium.core :refer [bench quick-bench with-progress-reporting]])
-
-(defn stress-pool [^long n]
-  (loop [i n]
-    (if (> i 0)
-      (do
-        (let [b (acquire-buffer)] (.clear b) (release-buffer b))
-        (recur (dec i)))
-      i)))
-
-(defn stress [^long n]
-  (await
-    (first-success
-      (future (stress-pool n))
-      (future (stress-pool n))
-      (future (stress-pool n))
-      (future (stress-pool n))
-      (future (stress-pool n))
-      (future (stress-pool n))
-      (future (stress-pool n))
-      (future (stress-pool n))
-      (future (stress-pool n))
-      (future (stress-pool n)))
-    100))
-
 (comment
-  nil
-  (with-context
-    ctx
-    (info (stress 1000))
-    (with-progress-reporting (bench (stress 10)))))
+  (require
+    '[criterium.core :refer [bench quick-bench with-progress-reporting]])
+
+  (defn stress-pool [^long n]
+    (loop [i n]
+      (if (> i 0)
+        (do
+          (let [b (acquire-buffer)] (.clear b) (release-buffer b))
+          (recur (dec i)))
+        i)))
+
+  (defn stress [^long n]
+    (await
+      (first-success
+        (future (stress-pool n))
+        (future (stress-pool n))
+        (future (stress-pool n))
+        (future (stress-pool n))
+        (future (stress-pool n))
+        (future (stress-pool n))
+        (future (stress-pool n))
+        (future (stress-pool n))
+        (future (stress-pool n))
+        (future (stress-pool n)))
+      100))
+
+  (comment
+    nil
+    (with-context
+      ctx
+      (info (stress 1000))
+      (with-progress-reporting (bench (stress 10))))))
 
 ;; eof
+

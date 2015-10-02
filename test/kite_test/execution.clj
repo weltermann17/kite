@@ -66,8 +66,8 @@
                                              )))))))))
   ;(expect nil (Thread/sleep 1000))
   ;(expect nil (println (:executor ctx2)))
-  (expect Object (with-context ctx1 (schedule-once (fn [] (println (/ 1 0))) 500)))
-  (expect Object (with-context ctx1 (schedule-repeatedly (fn [] 5) 50 10)))
+  (expect Object (with-context ctx1 (schedule-once 500 (fn [] (println (/ 1 0))))))
+  (expect Object (with-context ctx1 (schedule-repeatedly 50 10 (fn [] 5))))
   ;(expect nil (Thread/sleep 2000))
 
   ;(expect (partial reader?) (execute-all [(fn [] nil) (fn [] nil)] nil))

@@ -1,8 +1,11 @@
 (in-ns 'kite.aio)
 
 (import
+  [java.io
+   IOException]
   [java.net
-   InetSocketAddress]
+   InetSocketAddress
+   SocketException]
   [java.nio.channels
    AsynchronousSocketChannel
    CompletionHandler]
@@ -12,39 +15,38 @@
 
 ;; socket-client with pooled client sockets
 
+(defn remote-address [^String hostname-or-ip ^Long port]
+  (InetSocketAddress. hostname-or-ip port))
+
 (defn open-client
-  "Returns a future. On success 'succ' is called with a connected socket.
-  This socket is either newly created or from a pool and newly connected or
-  (in the best case) from a pool of already connected sockets. 'fail' is called
-  with an exception in any error case including a timeout."
-  (^AsynchronousSocketChannel [^String hostname ^Long port ^Long timeout succ fail]
-   (open-client (InetSocketAddress. hostname port) timeout succ fail))
-  (^AsynchronousSocketChannel [^InetSocketAddress remoteaddress ^Long timeout succ fail]
-   (assert (> timeout 0))
-   (let [client (acquire-client remoteaddress)
-         timeout-occurred (atom false)
-         p (promise)
-         f (->future p)
-         ;s (schedule-once (fn []
-         ;                   (compare-and-set! timeout-occurred false true)
-         ;                   (complete p (failure (TimeoutException. (<< "Could not connect to '~{remoteaddress}' within ~{timeout} ms.")))))
-         ;                 timeout)
-         handle (fn [v] (when-not @timeout-occurred
-                          ;(.cancel ^ScheduledFuture s true)
-                          (info "before complete")
-                          (complete p v)
-                          (info "after complete")))
-         h (reify CompletionHandler
-             (^void failed [_ ^Throwable e _]
-               (handle (failure e)))
-             (^void completed [_ _ _]
-               (handle (success client))))]
-     (on-success-or-failure f succ fail)
+  ([^InetSocketAddress remoteaddress succ]
+   (open-client remoteaddress succ (fn [e] (error "open-client" e))))
+  ([^InetSocketAddress remoteaddress succ fail]
+   (open-client remoteaddress -1 succ fail))
+  ([^InetSocketAddress remoteaddress ^Long timeout succ fail]
+   (if-let [client (acquire-client remoteaddress)]
      (if (connected? client)
-       (do (info "before handle") (handle (success client)) (info "after handle"))
-       (do (info "connect" (Thread/currentThread)) (.connect ^AsynchronousSocketChannel client remoteaddress nil h)))
-     (info "end open-client")
-     f)))
+       (succ client)
+       (let [timeout-occurred (when (> timeout 0) (atom false))
+             p (promise)
+             s (when (> timeout 0)
+                 (schedule-once (fn []
+                                  (compare-and-set! timeout-occurred false true)
+                                  (complete p (failure (TimeoutException. (<< "Could not connect to '~{remoteaddress}' within ~{timeout} ms.")))))
+                                timeout))
+             handle (fn [v] (if timeout-occurred
+                              (when-not @timeout-occurred
+                                (.cancel ^ScheduledFuture s true)
+                                (complete p v))
+                              (complete p v)))
+             h (reify CompletionHandler
+                 (^void failed [_ ^Throwable e _]
+                   (handle (failure e)))
+                 (^void completed [_ _ _]
+                   (handle (success client))))]
+         (on-success-or-failure (->future p) succ fail)
+         (.connect ^AsynchronousSocketChannel client remoteaddress nil h)))
+     (fail (SocketException. "Could not create a new socket or retrieve one from a pool.")))))
 
 (defn close-client [^AsynchronousSocketChannel client]
   (release-client client))
