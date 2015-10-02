@@ -4,12 +4,12 @@
 
 (defn open-server
   "Returns a future. On success the server is passed to the 'succ' callback. "
-  ([^Long port succ]
-   (open-server port succ (fn [e] (error "server" e))))
-  ([^Long port succ fail]
+  ([^InetSocketAddress address succ]
+   (open-server address succ (fn [e] (error "server" e))))
+  ([^InetSocketAddress address succ fail]
    (let [config (from-context :config)
          backlog (:socket-backlog config)]
-     (open-server (InetSocketAddress. port) backlog succ fail)))
+     (open-server address backlog succ fail)))
   ([^InetSocketAddress address ^Long backlog succ fail]
    (completable-future
      succ fail

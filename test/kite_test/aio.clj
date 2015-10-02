@@ -17,16 +17,18 @@
       (add-execution-context {})
       (add-aio-context {})))
 
-(def ^:private port 3001)
+(def ^:private address (socket-address "127.0.0.1" 3001))
 
 (def ^:private cc (atom 0))
+
+;; with callbacks
 
 (expect
   nil
   (with-context
     ctx
     (open-server
-      port
+      address
       (fn [server]
         (accept
           server
@@ -36,21 +38,21 @@
                (w [b] (parse-requests b (fn [_] (write-socket client responsestring r))))]
               (r nil))))
         (info server)
-        ;(schedule-once 5000 (fn [] (close-server server) (warn server)))
-        (let [remote (remote-address "localhost" port)]
-          (loop [j 200]
-            (when (> j 0)
-              (open-client
-                remote
-                (fn [client]
-                  (letfn [(r [_]
-                             (read-socket client w)
-                             (let [k (swap! cc + 48)] (when (= 0 (mod k 1000000)) (info k))))
-                          (w [_] (write-socket client requeststring r))]
-                    (w nil))))
-              (recur (dec j)))))))
+        (loop [j 300]
+          (when (> j 0)
+            (open-client
+              (socket-address "127.0.0.1" 8080)
+              (fn [client]
+                (letfn [(r [_]
+                           (read-socket client w)
+                           (let [k (swap! cc + 48)] (when (= 0 (mod k 1000000)) (info k))))
+                        (w [_] (write-socket client requeststring r))]
+                  (w nil))))
+            (recur (dec j))))))
     (await-channel-group-termination (from-context :channel-group) 119000)
     (shutdown-channel-group (from-context :channel-group) 1000)))
+
+;; trying the monadic way
 
 ;; testing
 

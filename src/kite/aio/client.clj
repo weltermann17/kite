@@ -15,8 +15,11 @@
 
 ;; socket-client with pooled client sockets
 
-(defn remote-address [^String hostname-or-ip ^Long port]
-  (InetSocketAddress. hostname-or-ip port))
+(defn socket-address
+  ([^Long port]
+   (InetSocketAddress. port))
+  ([^String hostname-or-ip ^Long port]
+   (InetSocketAddress. hostname-or-ip port)))
 
 (defn open-client
   ([^InetSocketAddress remoteaddress succ]
