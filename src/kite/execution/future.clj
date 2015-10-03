@@ -71,12 +71,12 @@
 
 ;; fn
 
-(defn on-success-or-failure [f succ fail]
+(defn on-success-or-failure [fut succ fail]
   "Combine a call to on-success and on-failure. As an extra goody
   'succ' is surrounded by a try/catch that will call 'fail' in case
-  of an exception that escapes the scope of 'succ'. Returns 'f'."
-  (on-success f (fn [v] (try (succ v) (catch Throwable e (fail e)))))
-  (on-failure f fail))
+  of an exception that escapes the scope of 'succ'. Returns 'fut'."
+  (when succ (on-success fut (fn [v] (try (succ v) (catch Throwable e (fail e))))))
+  (when fail (on-failure fut fail)))
 
 (defn immediate [v]
   "Will always return a Success, v must not throw an exception.

@@ -41,7 +41,7 @@
         (loop [j 300]
           (when (> j 0)
             (open-client
-              (socket-address "127.0.0.1" 8080)
+              address
               (fn [client]
                 (letfn [(r [_]
                            (read-socket client w)
@@ -49,10 +49,24 @@
                         (w [_] (write-socket client requeststring r))]
                   (w nil))))
             (recur (dec j))))))
-    (await-channel-group-termination (from-context :channel-group) 119000)
+    (await-channel-group-termination (from-context :channel-group) 1000)
     (shutdown-channel-group (from-context :channel-group) 1000)))
 
 ;; trying the monadic way
+
+
+(defn monadic-test []
+  ;(open-server address)
+  ; (Thread/sleep 1000)
+  (let [group (from-context :channel-group)
+        s (m-do [server (open-server address)]
+                [:return
+                 server])]
+    (await s 1000)
+    (error 2 s)
+    (await-channel-group-termination group 5000)))
+
+(expect-focused false (with-context ctx (monadic-test)))
 
 ;; testing
 

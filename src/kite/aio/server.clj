@@ -3,7 +3,10 @@
 ;; socket-server
 
 (defn open-server
+
   "Returns a future. On success the server is passed to the 'succ' callback. "
+  ([^InetSocketAddress address]
+   (open-server address nil nil))
   ([^InetSocketAddress address succ]
    (open-server address succ (fn [e] (error "server" e))))
   ([^InetSocketAddress address succ fail]
