@@ -14,9 +14,9 @@
         [:return (fn [^ExecutorService executor]
                    (AsynchronousChannelGroup/withThreadPool executor))]))
 
-(defn await-channel-group-termination
+(defn await-termination
   ([^AsynchronousChannelGroup channel-group]
-   (await-channel-group-termination channel-group Long/MAX_VALUE))
+   (await-termination channel-group Long/MAX_VALUE))
   ([^AsynchronousChannelGroup channel-group ^Long timeout]
    (.awaitTermination
      channel-group

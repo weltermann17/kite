@@ -8,7 +8,7 @@
 
 (declare immediate failed-only)
 
-(defn- mk-future [value succ-callbacks fail-callbacks]
+(defn- mk-future [value callbacks]
   (reify
     Future
     (await [this milliseconds]
@@ -26,23 +26,13 @@
     (on-complete [this f]
       (let [v @value]
         (if (= v not-yet-completed)
-          (do
-            (conj! succ-callbacks f)
-            (conj! fail-callbacks f))
+          (conj! callbacks f)
           (execute f v)))
       this)
-    (on-success [this f]
-      (let [v @value]
-        (if (= v not-yet-completed)
-          (conj! succ-callbacks (fn [a] (f @a)))
-          (when (success? v) (execute f @v))))
-      this)
-    (on-failure [this f]
-      (let [v @value]
-        (if (= v not-yet-completed)
-          (conj! fail-callbacks (fn [a] (f @a)))
-          (when (failure? v) (execute f @v))))
-      this)
+    (on-complete [this succ fail]
+      (if (and succ fail)
+        (on-complete this (fn [v] (if (success? v) (succ @v) (fail @v))))
+        this))
 
     IDeref
     (deref [_] @value)
@@ -71,13 +61,6 @@
 
 ;; fn
 
-(defn on-success-or-failure [fut succ fail]
-  "Combine a call to on-success and on-failure. As an extra goody
-  'succ' is surrounded by a try/catch that will call 'fail' in case
-  of an exception that escapes the scope of 'succ'. Returns 'fut'."
-  (when succ (on-success fut (fn [v] (try (succ v) (catch Throwable e (fail e))))))
-  (when fail (on-failure fut fail)))
-
 (defn immediate [v]
   "Will always return a Success, v must not throw an exception.
    If the result of v is unknown better use 'future' instead."
@@ -105,7 +88,7 @@
 (defmacro completable-future [succ fail & body]
   `(let [p# (promise)
          f# (->future p#)]
-     (on-success-or-failure f# ~succ ~fail)
+     (on-complete f# ~succ ~fail)
      (execute (fn [] (complete p# (result ~@body))))
      f#))
 

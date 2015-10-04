@@ -52,6 +52,7 @@
 
 (defn byte-buffer-from-string ^ByteBuffer [^ByteString b]
   "Acquires a buffer from the pool and fills it with 'b'. Assumes (but does not assert) that 'capacity' > 'count b'."
-  (doto (acquire-buffer) (.put ^bytes (.array b)) (.flip)))
+  (let [[arr f _ l] (array-from-to-len b)]
+    (doto (acquire-buffer) (.put ^bytes arr f l) (.flip))))
 
 ;; eof

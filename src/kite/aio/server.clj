@@ -25,39 +25,21 @@
          (.setOption StandardSocketOptions/SO_RCVBUF rcvbs)
          (.bind address backlog))))))
 
-(defn close-server [^AsynchronousServerSocketChannel server]
-  "Not really useful, just for symmetry."
-  (close-socket server))
+;; accept connections
 
 (defn accept
+  ([^AsynchronousServerSocketChannel server]
+   (accept server nil nil))
   ([^AsynchronousServerSocketChannel server succ]
-   (accept server succ (fn [e] (error "accept" e))))
+   (accept server succ (fn [e] (when-not (closing-socket-exception? e) (error "accept" e)))))
   ([^AsynchronousServerSocketChannel server succ fail]
    (let [p (promise)
-         f (->future p)
          h (reify CompletionHandler
              (^void failed [_ ^Throwable e _]
-               (when-not (closing-socket-exception? e)
-                 (accept server succ fail))
                (complete p (failure e)))
              (^void completed [_ socket _]
-               (complete p (success (configure-socket ^AsynchronousSocketChannel socket)))
-               (accept server succ fail)))]
-     (on-success-or-failure f succ fail)
+               (complete p (success (configure-socket ^AsynchronousSocketChannel socket)))))]
      (.accept server nil h)
-     f)))
-
-(defn fast-accept [^AsynchronousServerSocketChannel server succ fail]
-  "Callback called in completion handler directly."
-  (let [h (letfn [(handle [f v]
-                          (f v)
-                          (accept server succ fail))]
-            (reify CompletionHandler
-              (^void failed [_ ^Throwable e _]
-                (when-not (instance? AsynchronousCloseException e)
-                  (handle fail e)))
-              (^void completed [_ socket _]
-                (handle succ (configure-socket socket)))))]
-    (.accept server nil h)))
+     (on-complete (->future p) succ fail))))
 
 ;; eof

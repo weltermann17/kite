@@ -18,6 +18,10 @@
   "Use this if it is save to ignore any exception thrown by 'body'."
   `(try ~@body (catch Throwable _#)))
 
+(defmacro try-check [& body]
+  "Println any exception thrown by 'body'."
+  `(try ~@body (catch Throwable e# (println e#))))
+
 (def ^:constant empty-byte-array ^bytes (byte-array 0))
 
 ;; eof

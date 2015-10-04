@@ -47,7 +47,7 @@
                    (handle (failure e)))
                  (^void completed [_ _ _]
                    (handle (success client))))]
-         (on-success-or-failure (->future p) succ fail)
+         (on-complete (->future p) succ fail)
          (.connect ^AsynchronousSocketChannel client remoteaddress nil h)))
      (fail (SocketException. "Could not create a new socket or retrieve one from a pool.")))))
 

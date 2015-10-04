@@ -23,50 +23,86 @@
 
 ;; with callbacks
 
-(expect
+(expect-focused
   nil
   (with-context
     ctx
     (open-server
       address
       (fn [server]
-        (accept
-          server
-          (fn [client]
-            (letfn
-              [(r [_] (read-socket client w))
-               (w [b] (parse-requests b (fn [_] (write-socket client responsestring r))))]
-              (r nil))))
+        (letfn
+          [(a [] (accept
+                   server
+                   (fn [client]
+                     (letfn
+                       [(r [_] (read-socket client w))
+                        (w [b] (try-check (write-socket client responsestring r)))]
+                       (r nil))
+                     (a))))]
+          (a))
         (info server)
-        (loop [j 300]
+        (loop [j 0]
           (when (> j 0)
             (open-client
               address
               (fn [client]
                 (letfn [(r [_]
                            (read-socket client w)
-                           (let [k (swap! cc + 48)] (when (= 0 (mod k 1000000)) (info k))))
+                           (let [k (swap! cc + 48)] (when (= 0 (mod k (* 48 10000))) (info k))))
                         (w [_] (write-socket client requeststring r))]
                   (w nil))))
             (recur (dec j))))))
-    (await-channel-group-termination (from-context :channel-group) 1000)
+    (await-termination (from-context :channel-group) 119000)
     (shutdown-channel-group (from-context :channel-group) 1000)))
 
 ;; trying the monadic way
 
-
 (defn monadic-test []
-  ;(open-server address)
-  ; (Thread/sleep 1000)
-  (let [group (from-context :channel-group)
-        s (m-do [server (open-server address)]
-                [:return
-                 server])]
-    (await s 1000)
-    (error 2 s)
-    (await-channel-group-termination group 5000)))
+  (let [group (from-context :channel-group)]
+    (m-do [server (open-server address)]
+          [:return
+           (println server)
+           (letfn [(a [] (m-do [client (accept server)]
+                               [:return
+                                (letfn [(b [] (m-do [s (read-socket client)
+                                                     r (parse-requests s)
+                                                     _ (write-socket client responsestring)]
+                                                    [:return
+                                                     (b)]))]
+                                  (b))
+                                (a)]))]
+             (a))
+           server])
+    (await-termination group 120000)))
 
-(expect-focused false (with-context ctx (monadic-test)))
+(defn m-loop* [f]
+  (let [fut (f)]
+    (on-complete fut (fn [v] (when (success? v) (println "m-loop" v) (m-loop* f))))))
+
+(defmacro m-loop [body]
+  `(m-loop* (fn [] ~body)))
+
+(defn- rw [client]
+  (m-do [s (read-socket client)
+         r (parse-requests s)
+         w (write-socket client responsestring)]
+        [:return w]))
+
+(defn- acc [server]
+  (m-do [client (accept server)
+         _ (m-loop (rw client))]
+        [:return client]))
+
+(defn monadic-test2 []
+  (let [group (from-context :channel-group)
+        f (m-do [server (open-server address)
+                 client (m-loop (acc server))]
+                [:return server])]
+    (await f 1000)
+    (println "ff" f)
+    (await-termination group 120000)))
+
+(comment false (with-context ctx (monadic-test2)))
 
 ;; testing
 

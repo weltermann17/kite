@@ -32,6 +32,8 @@
   "Returns a future. On success 'succ' is called with a vector of requests.
    On failure 'fail' is called with an exception.
    Handles pipe-lined requests with special handling for benchmark situations."
+  ([^ByteString b]
+   (parse-requests b nil nil))
   ([^ByteString b succ]
    (parse-requests b succ (fn [e] (error "parse-requests" e))))
   ([^ByteString b succ fail]

@@ -30,11 +30,15 @@
                    y (future (/ 2 0))
                    z (immediate 3)]
                   [:return (+ x y z)])))
-(expect (success 10)
-        (! (m-do [x (future (+ 1 1))
-                  y (future (/ 4 2))
-                  z (future (* 2 3))]
-                 [:return (+ x y z)])))
+(expect nil
+        (with-context
+          ctx
+          (let [f (m-do [x (future (+ 1 1))
+                         y (future (/ 4 2))
+                         z (future (* 2 3))]
+                        [:return 0])]
+            (await f 100)
+            (println "f" f))))
 (expect ArithmeticException
         @(! (m-do [x (immediate 1)
                    y (future (/ 2 0))
@@ -51,21 +55,21 @@
 (expect (success 9) (! (<*> (future inc) (success 8))))
 (expect (success 9) (! (<*> (future inc) (right 8))))
 (expect (with-context ctx (future 9)) (with-context ctx (<*> (future inc) (just 8))))
-(with-context ctx
-              (let [fut (fn [w i] (future (Thread/sleep w) i))
-                    fut-fail (fn [w i] (future (Thread/sleep w) (/ i 0)))
-                    f1 (first-result (fut 30 1) (fut 20 2) (fut 10 3))
-                    f2 (first-success (fut 30 1) (fut 20 2) (fut 10 3))
-                    f3 (first-result (fut-fail 30 1) (fut 20 2) (fut 1 3))
-                    f4 (first-success (fut-fail 30 1) (fut-fail 20 2) (fut 10 3))
-                    f5 (first-success (fut-fail 30 1) (fut-fail 20 2) (fut-fail 10 3))
-                    ]
-                (expect (success 3) (! f1))
-                (expect (success 3) (! f2))
-                (expect (success 3) (! f3))
-                (expect (success 3) (! f4))
-                (expect failure? (! f5))
-                ))
+(expect nil (with-context ctx
+                          (let [fut (fn [w i] (future (Thread/sleep w) i))
+                                fut-fail (fn [w i] (future (Thread/sleep w) (/ i 0)))
+                                f1 (first-result (fut 30 1) (fut 20 2) (fut 10 3))
+                                f2 (first-success (fut 30 1) (fut 20 2) (fut 10 3))
+                                f3 (first-result (fut-fail 30 1) (fut 20 2) (fut 1 3))
+                                f4 (first-success (fut-fail 30 1) (fut-fail 20 2) (fut 10 3))
+                                f5 (first-success (fut-fail 30 1) (fut-fail 20 2) (fut-fail 10 3))
+                                ]
+                            (expect (success 3) (! f1))
+                            (expect (success 3) (! f2))
+                            (expect (success 3) (! f3))
+                            (expect (success 3) (! f4))
+                            (expect failure? (! f5))
+                            )))
 (comment (expect (success 9) (! (let [f (future (+ 8 1))]
                                   (on-success f #(expect 9 %))
                                   (on-failure f #(expect ArithmeticException %)) f)))

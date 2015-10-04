@@ -13,7 +13,8 @@
     "Returns true if this has a length of 0, has a length of 0 when trimmed,
     is nil or is the nil-bytes-string.")
   (convert-to-byte-array [_]
-    "Returns a new byte array from 0 to length with the content of this, this is fairly expensive.")
+    "Returns a new byte array from 0 to length with the content of this.
+    This is fairly expensive.")
   (convert-to-string [_]
     "Returns the content as a String, this is fairly expensive.")
   (split-delimiter [_ ^bytes delimiter]
